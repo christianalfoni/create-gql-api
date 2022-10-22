@@ -26,8 +26,23 @@ function createObjectTypeDefinitionLookup(
 
 const lookup = createObjectTypeDefinitionLookup(schema.definitions);
 
+function getNamedTypeNode(type: GQL.TypeNode): GQL.NamedTypeNode {
+  if (type.kind === GQL.Kind.NAMED_TYPE) {
+    return type;
+  }
+
+  return getNamedTypeNode(type.type);
+}
+
 function createValueType(value: string) {
-  if (value === "String" || value === "UUID4" || "ID") {
+  if (
+    value === "String" ||
+    value === "UUID4" ||
+    value === "ID" ||
+    value === "DateTime" ||
+    value === "NaiveDateTime" ||
+    value === "Base64"
+  ) {
     return "string";
   }
 
@@ -35,19 +50,11 @@ function createValueType(value: string) {
     return "boolean";
   }
 
-  if (value === "Int") {
+  if (value === "Int" || value === "Float") {
     return "number";
   }
 
   return value;
-}
-
-function getNamedTypeNode(type: GQL.TypeNode): GQL.NamedTypeNode {
-  if (type.kind === GQL.Kind.NAMED_TYPE) {
-    return type;
-  }
-
-  return getNamedTypeNode(type.type);
 }
 
 function createArgument(arg: GQL.InputValueDefinitionNode) {
@@ -64,7 +71,7 @@ function createArguments(args: readonly GQL.InputValueDefinitionNode[]) {
   return argsType + "    }\n";
 }
 
-function createField(field: GQL.FieldDefinitionNode) {
+function createObjectField(field: GQL.FieldDefinitionNode) {
   return `${field.name.value}: {
     type: ${createValueType(getNamedTypeNode(field.type).name.value)};
     arguments: ${
@@ -75,21 +82,85 @@ function createField(field: GQL.FieldDefinitionNode) {
   }\n`;
 }
 
-function createFields(fields: readonly GQL.FieldDefinitionNode[]) {
+function createObjectFields(fields: readonly GQL.FieldDefinitionNode[]) {
   let typeFields = "";
 
   for (const field of fields) {
-    typeFields += `  ${createField(field)}`;
+    typeFields += `  ${createObjectField(field)}`;
   }
 
   return typeFields;
 }
 
-function createRootType(definition: GQL.ObjectTypeDefinitionNode) {
+function createInputField(field: GQL.InputValueDefinitionNode) {
+  return `${field.name.value}: ${createValueType(
+    getNamedTypeNode(field.type).name.value
+  )};\n`;
+}
+
+function createInputFields(fields: readonly GQL.InputValueDefinitionNode[]) {
+  let typeFields = "";
+
+  for (const field of fields) {
+    typeFields += `  ${createInputField(field)}`;
+  }
+
+  return typeFields;
+}
+
+function createRootObjectType(definition: GQL.ObjectTypeDefinitionNode) {
   return `
 export type ${definition.name.value} = {
-${definition.fields ? `${createFields(definition.fields)}` : ""}
+${definition.fields ? `${createObjectFields(definition.fields)}` : ""}
 }
+`;
+}
+
+function createRootInputType(definition: GQL.InputObjectTypeDefinitionNode) {
+  return `
+export type ${definition.name.value} = {
+${definition.fields ? `${createInputFields(definition.fields)}` : ""}
+}
+`;
+}
+
+function createEnumValue(value: GQL.EnumValueDefinitionNode) {
+  return `  ${value.name.value} = "${value.name.value}",\n`;
+}
+
+function createEnumValues(values: readonly GQL.EnumValueDefinitionNode[]) {
+  let typeValues = "";
+
+  for (const value of values) {
+    typeValues += `  ${createEnumValue(value)}`;
+  }
+
+  return typeValues;
+}
+
+function createRootEnumType(definition: GQL.EnumTypeDefinitionNode) {
+  return `
+export enum ${definition.name.value} {
+${definition.values ? `${createEnumValues(definition.values)}` : ""}
+}
+`;
+}
+
+function createUnionTypes(types: readonly GQL.NamedTypeNode[]) {
+  let union = "";
+
+  for (const type of types) {
+    union += `  | ${type.name.value}`;
+  }
+
+  return union;
+}
+
+function createRootUnionType(definition: GQL.UnionTypeDefinitionNode) {
+  return `
+export type ${definition.name.value} = ${
+    definition.types ? createUnionTypes(definition.types) : "never"
+  };
 `;
 }
 
@@ -97,8 +168,21 @@ function createRootTypes(definitions: GQL.DocumentNode["definitions"]) {
   let types = "";
 
   for (const definition of definitions) {
-    if (definition.kind === "ObjectTypeDefinition") {
-      types += createRootType(definition);
+    if (definition.kind === GQL.Kind.OBJECT_TYPE_DEFINITION) {
+      types += createRootObjectType(definition);
+      continue;
+    }
+    if (definition.kind === GQL.Kind.INPUT_OBJECT_TYPE_DEFINITION) {
+      types += createRootInputType(definition);
+      continue;
+    }
+    if (definition.kind === GQL.Kind.ENUM_TYPE_DEFINITION) {
+      types += createRootEnumType(definition);
+      continue;
+    }
+    if (definition.kind === GQL.Kind.UNION_TYPE_DEFINITION) {
+      types += createRootUnionType(definition);
+      continue;
     }
   }
 

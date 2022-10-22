@@ -5,7 +5,7 @@ export type Album = {
     arguments: null;
   }
   sandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   title: {
@@ -15,9 +15,25 @@ export type Album = {
 
 }
 
+export enum Authorization {
+    COMMENT = "COMMENT",
+    NONE = "NONE",
+    OWNER = "OWNER",
+    READ = "READ",
+    WRITE_CODE = "WRITE_CODE",
+    WRITE_PROJECT = "WRITE_PROJECT",
+
+}
+
+export enum AuthType {
+    BASIC = "BASIC",
+    BEARER = "BEARER",
+
+}
+
 export type BillingDetails = {
   amount: {
-    type: string;
+    type: number;
     arguments: null;
   }
   currency: {
@@ -33,11 +49,11 @@ export type BillingDetails = {
 
 export type BillingPreview = {
   immediatePayment: {
-    type: string;
+    type: BillingDetails;
     arguments: null;
   }
   nextPayment: {
-    type: string;
+    type: BillingDetails;
     arguments: null;
   }
 
@@ -45,23 +61,25 @@ export type BillingPreview = {
 
 export type Bookmarked = {
   entity: {
-    type: string;
+    type: BookmarkEntity;
     arguments: null;
   }
   isBookmarked: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
 
 }
 
+export type BookmarkEntity =   | Team  | User;
+
 export type Branch = {
   connections: {
-    type: string;
+    type: Connection;
     arguments: null;
   }
   contribution: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   id: {
@@ -73,7 +91,7 @@ export type Branch = {
     arguments: null;
   }
   lastCommit: {
-    type: string;
+    type: LastCommit;
     arguments: null;
   }
   name: {
@@ -81,27 +99,27 @@ export type Branch = {
     arguments: null;
   }
   owner: {
-    type: string;
+    type: User;
     arguments: null;
   }
   poolSize: {
-    type: string;
+    type: number;
     arguments: null;
   }
   project: {
-    type: string;
+    type: Project;
     arguments: null;
   }
   pullRequests: {
-    type: string;
+    type: PullRequest;
     arguments: null;
   }
   status: {
-    type: string;
+    type: Status;
     arguments: null;
   }
   upstream: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
 
@@ -113,7 +131,7 @@ export type BranchConnections = {
     arguments: null;
   }
   connections: {
-    type: string;
+    type: Connection;
     arguments: null;
   }
 
@@ -125,7 +143,7 @@ export type BranchLastCommit = {
     arguments: null;
   }
   lastCommit: {
-    type: string;
+    type: LastCommit;
     arguments: null;
   }
 
@@ -137,15 +155,24 @@ export type BranchStatus = {
     arguments: null;
   }
   status: {
-    type: string;
+    type: Status;
     arguments: null;
   }
 
 }
 
+export type CodeReference = {
+  anchor: number;
+  code: string;
+  head: number;
+  lastUpdatedAt: string;
+  path: string;
+
+}
+
 export type CodeReferenceMetadata = {
   anchor: {
-    type: string;
+    type: number;
     arguments: null;
   }
   code: {
@@ -153,7 +180,7 @@ export type CodeReferenceMetadata = {
     arguments: null;
   }
   head: {
-    type: string;
+    type: number;
     arguments: null;
   }
   path: {
@@ -169,7 +196,7 @@ export type CodeReferenceMetadata = {
 
 export type Collaborator = {
   authorization: {
-    type: string;
+    type: Authorization;
     arguments: null;
   }
   id: {
@@ -181,11 +208,11 @@ export type Collaborator = {
     arguments: null;
   }
   sandbox: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   user: {
-    type: string;
+    type: User;
     arguments: null;
   }
   warning: {
@@ -205,15 +232,15 @@ export type Collection = {
     arguments: null;
   }
   sandboxCount: {
-    type: string;
+    type: number;
     arguments: null;
   }
   sandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   team: {
-    type: string;
+    type: Team;
     arguments: null;
   }
   teamId: {
@@ -221,7 +248,7 @@ export type Collection = {
     arguments: null;
   }
   user: {
-    type: string;
+    type: User;
     arguments: null;
   }
 
@@ -229,11 +256,11 @@ export type Collection = {
 
 export type Comment = {
   anchorReference: {
-    type: string;
+    type: Reference;
     arguments: null;
   }
   comments: {
-    type: string;
+    type: Comment;
     arguments: null;
   }
   content: {
@@ -249,27 +276,27 @@ export type Comment = {
     arguments: null;
   }
   isRead: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   isResolved: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   parentComment: {
-    type: string;
+    type: Comment;
     arguments: null;
   }
   references: {
-    type: string;
+    type: Reference;
     arguments: null;
   }
   replyCount: {
-    type: string;
+    type: number;
     arguments: null;
   }
   sandbox: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   updatedAt: {
@@ -277,7 +304,7 @@ export type Comment = {
     arguments: null;
   }
   user: {
-    type: string;
+    type: User;
     arguments: null;
   }
 
@@ -301,7 +328,7 @@ export type Connection = {
     arguments: null;
   }
   user: {
-    type: string;
+    type: User;
     arguments: null;
   }
 
@@ -309,23 +336,23 @@ export type Connection = {
 
 export type CurrentUser = {
   betaAccess: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   betaSandboxes: {
-    type: string;
+    type: SandboxV2;
     arguments: null;
   }
   bookmarkedTemplates: {
-    type: string;
+    type: Template;
     arguments: null;
   }
   collaboratorSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   collection: {
-    type: string;
+    type: Collection;
     arguments: {
       path: string;
       teamId: string;
@@ -333,14 +360,14 @@ export type CurrentUser = {
 
   }
   collections: {
-    type: string;
+    type: Collection;
     arguments: {
       teamId: string;
     }
 
   }
   deletionRequested: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   email: {
@@ -348,22 +375,22 @@ export type CurrentUser = {
     arguments: null;
   }
   featureFlags: {
-    type: string;
+    type: FeatureFlag;
     arguments: null;
   }
   githubOrganizations: {
-    type: string;
+    type: GithubOrganization;
     arguments: null;
   }
   githubProfile: {
-    type: string;
+    type: GithubProfile;
     arguments: null;
   }
   githubRepos: {
-    type: string;
+    type: GithubRepo;
     arguments: {
-      page: string;
-      perPage: string;
+      page: number;
+      perPage: number;
     }
 
   }
@@ -372,7 +399,7 @@ export type CurrentUser = {
     arguments: null;
   }
   likedSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   name: {
@@ -380,14 +407,14 @@ export type CurrentUser = {
     arguments: null;
   }
   notificationPreferences: {
-    type: string;
+    type: NotificationPreferences;
     arguments: null;
   }
   notifications: {
-    type: string;
+    type: Notification;
     arguments: {
-      limit: string;
-      orderBy: string;
+      limit: number;
+      orderBy: OrderBy;
       type: string;
     }
 
@@ -397,65 +424,65 @@ export type CurrentUser = {
     arguments: null;
   }
   provider: {
-    type: string;
+    type: ProviderName;
     arguments: null;
   }
   recentBranches: {
-    type: string;
+    type: Branch;
     arguments: {
-      contribution: string;
-      limit: string;
+      contribution: boolean;
+      limit: number;
       teamId: string;
     }
 
   }
   recentProjects: {
-    type: string;
+    type: Project;
     arguments: {
-      limit: string;
+      limit: number;
     }
 
   }
   recentlyAccessedSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      limit: string;
+      limit: number;
       teamId: string;
     }
 
   }
   recentlyUsedTemplates: {
-    type: string;
+    type: Template;
     arguments: {
       teamId: string;
     }
 
   }
   sandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      hasOriginalGit: string;
-      limit: string;
-      orderBy: string;
-      showDeleted: string;
+      hasOriginalGit: boolean;
+      limit: number;
+      orderBy: OrderBy;
+      showDeleted: boolean;
     }
 
   }
   team: {
-    type: string;
+    type: Team;
     arguments: {
       id: string;
     }
 
   }
   teams: {
-    type: string;
+    type: Team;
     arguments: null;
   }
   templates: {
-    type: string;
+    type: Template;
     arguments: {
-      showAll: string;
+      showAll: boolean;
       teamId: string;
     }
 
@@ -465,9 +492,15 @@ export type CurrentUser = {
     arguments: null;
   }
   workspaces: {
-    type: string;
+    type: Team;
     arguments: null;
   }
+
+}
+
+export enum Direction {
+    ASC = "ASC",
+    DESC = "DESC",
 
 }
 
@@ -481,7 +514,7 @@ export type Environment = {
     arguments: null;
   }
   limitCpu: {
-    type: string;
+    type: number;
     arguments: null;
   }
   limitMemory: {
@@ -497,7 +530,7 @@ export type Environment = {
     arguments: null;
   }
   order: {
-    type: string;
+    type: number;
     arguments: null;
   }
 
@@ -509,7 +542,7 @@ export type FeatureFlag = {
     arguments: null;
   }
   enabled: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   id: {
@@ -521,7 +554,7 @@ export type FeatureFlag = {
     arguments: null;
   }
   teams: {
-    type: string;
+    type: Team;
     arguments: null;
   }
 
@@ -529,7 +562,7 @@ export type FeatureFlag = {
 
 export type Git = {
   baseGitSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
       teamId: string;
     }
@@ -548,7 +581,7 @@ export type Git = {
     arguments: null;
   }
   originalGitSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
       teamId: string;
     }
@@ -589,6 +622,14 @@ export type GithubOrganization = {
 
 }
 
+export enum GithubPermission {
+    ADMIN = "ADMIN",
+    NONE = "NONE",
+    READ = "READ",
+    WRITE = "WRITE",
+
+}
+
 export type GithubProfile = {
   avatarUrl: {
     type: string;
@@ -615,7 +656,7 @@ export type GithubProfile = {
 
 export type GithubRepo = {
   authorization: {
-    type: string;
+    type: GithubRepoAuthorization;
     arguments: null;
   }
   fullName: {
@@ -631,7 +672,7 @@ export type GithubRepo = {
     arguments: null;
   }
   owner: {
-    type: string;
+    type: GithubOrganization;
     arguments: null;
   }
   updatedAt: {
@@ -641,13 +682,19 @@ export type GithubRepo = {
 
 }
 
+export enum GithubRepoAuthorization {
+    READ = "READ",
+    WRITE = "WRITE",
+
+}
+
 export type GitHubRepository = {
   allowForking: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   archived: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   createdAt: {
@@ -663,15 +710,15 @@ export type GitHubRepository = {
     arguments: null;
   }
   fork: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   id: {
-    type: string;
+    type: number;
     arguments: null;
   }
   isTemplate: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   name: {
@@ -683,15 +730,15 @@ export type GitHubRepository = {
     arguments: null;
   }
   parent: {
-    type: string;
+    type: GitHubRepository;
     arguments: null;
   }
   permission: {
-    type: string;
+    type: GithubPermission;
     arguments: null;
   }
   private: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   pushedAt: {
@@ -699,13 +746,18 @@ export type GitHubRepository = {
     arguments: null;
   }
   source: {
-    type: string;
+    type: GitHubRepository;
     arguments: null;
   }
   updatedAt: {
     type: string;
     arguments: null;
   }
+
+}
+
+export enum GitProvider {
+    GITHUB = "GITHUB",
 
 }
 
@@ -725,13 +777,21 @@ export type GitV2 = {
 
 }
 
+export type ImageReference = {
+  fileName: string;
+  resolution: number;
+  src: string;
+  url: string;
+
+}
+
 export type ImageReferenceMetadata = {
   fileName: {
     type: string;
     arguments: null;
   }
   resolution: {
-    type: string;
+    type: number;
     arguments: null;
   }
   uploadId: {
@@ -747,7 +807,7 @@ export type ImageReferenceMetadata = {
 
 export type InstallationEvent = {
   action: {
-    type: string;
+    type: InstallationEventAction;
     arguments: null;
   }
   event: {
@@ -757,9 +817,14 @@ export type InstallationEvent = {
 
 }
 
+export enum InstallationEventAction {
+    CREATED = "CREATED",
+
+}
+
 export type Invitation = {
   authorization: {
-    type: string;
+    type: Authorization;
     arguments: null;
   }
   email: {
@@ -771,7 +836,7 @@ export type Invitation = {
     arguments: null;
   }
   sandbox: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   token: {
@@ -799,15 +864,21 @@ export type LastCommit = {
     arguments: null;
   }
   user: {
-    type: string;
+    type: User;
     arguments: null;
   }
 
 }
 
+export type MemberAuthorization = {
+  authorization: TeamMemberAuthorization;
+  userId: string;
+
+}
+
 export type Notification = {
   archived: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   data: {
@@ -823,7 +894,7 @@ export type Notification = {
     arguments: null;
   }
   read: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   type: {
@@ -835,23 +906,40 @@ export type Notification = {
 
 export type NotificationPreferences = {
   emailCommentMention: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   emailCommentReply: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   emailNewComment: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
 
 }
 
+export type OrderBy = {
+  direction: Direction;
+  field: string;
+
+}
+
+export type PreviewReference = {
+  height: number;
+  previewPath: string;
+  screenshotSrc: string;
+  userAgent: string;
+  width: number;
+  x: number;
+  y: number;
+
+}
+
 export type PreviewReferenceMetadata = {
   height: {
-    type: string;
+    type: number;
     arguments: null;
   }
   previewPath: {
@@ -867,15 +955,15 @@ export type PreviewReferenceMetadata = {
     arguments: null;
   }
   width: {
-    type: string;
+    type: number;
     arguments: null;
   }
   x: {
-    type: string;
+    type: number;
     arguments: null;
   }
   y: {
-    type: string;
+    type: number;
     arguments: null;
   }
 
@@ -883,7 +971,7 @@ export type PreviewReferenceMetadata = {
 
 export type PrivateRegistry = {
   authType: {
-    type: string;
+    type: AuthType;
     arguments: null;
   }
   enabledScopes: {
@@ -895,11 +983,11 @@ export type PrivateRegistry = {
     arguments: null;
   }
   limitToScopes: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   proxyEnabled: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   registryAuthKey: {
@@ -907,7 +995,7 @@ export type PrivateRegistry = {
     arguments: null;
   }
   registryType: {
-    type: string;
+    type: RegistryType;
     arguments: null;
   }
   registryUrl: {
@@ -923,23 +1011,23 @@ export type PrivateRegistry = {
 
 export type Project = {
   appInstalled: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   availableEnvironments: {
-    type: string;
+    type: Environment;
     arguments: null;
   }
   branches: {
-    type: string;
+    type: Branch;
     arguments: null;
   }
   connections: {
-    type: string;
+    type: Connection;
     arguments: null;
   }
   defaultBranch: {
-    type: string;
+    type: Branch;
     arguments: null;
   }
   description: {
@@ -947,7 +1035,7 @@ export type Project = {
     arguments: null;
   }
   environment: {
-    type: string;
+    type: Environment;
     arguments: null;
   }
   lastAccessedAt: {
@@ -955,7 +1043,7 @@ export type Project = {
     arguments: null;
   }
   lastCommit: {
-    type: string;
+    type: LastCommit;
     arguments: null;
   }
   owner: {
@@ -963,11 +1051,11 @@ export type Project = {
     arguments: null;
   }
   private: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   pullRequests: {
-    type: string;
+    type: PullRequest;
     arguments: null;
   }
   repo: {
@@ -975,11 +1063,11 @@ export type Project = {
     arguments: null;
   }
   repository: {
-    type: string;
+    type: Repository;
     arguments: null;
   }
   teams: {
-    type: string;
+    type: Team;
     arguments: null;
   }
 
@@ -987,7 +1075,7 @@ export type Project = {
 
 export type ProSubscription = {
   billingInterval: {
-    type: string;
+    type: SubscriptionInterval;
     arguments: null;
   }
   cancelAt: {
@@ -1007,19 +1095,19 @@ export type ProSubscription = {
     arguments: null;
   }
   origin: {
-    type: string;
+    type: SubscriptionOrigin;
     arguments: null;
   }
   paymentProvider: {
-    type: string;
+    type: SubscriptionPaymentProvider;
     arguments: null;
   }
   quantity: {
-    type: string;
+    type: number;
     arguments: null;
   }
   status: {
-    type: string;
+    type: SubscriptionStatus;
     arguments: null;
   }
   trialEnd: {
@@ -1031,11 +1119,11 @@ export type ProSubscription = {
     arguments: null;
   }
   type: {
-    type: string;
+    type: SubscriptionType;
     arguments: null;
   }
   unitPrice: {
-    type: string;
+    type: number;
     arguments: null;
   }
   updateBillingUrl: {
@@ -1045,13 +1133,20 @@ export type ProSubscription = {
 
 }
 
+export enum ProviderName {
+    APPLE = "APPLE",
+    GITHUB = "GITHUB",
+    GOOGLE = "GOOGLE",
+
+}
+
 export type PullRequest = {
   baseRepository: {
-    type: string;
+    type: Repository;
     arguments: null;
   }
   creator: {
-    type: string;
+    type: User;
     arguments: null;
   }
   creatorUsername: {
@@ -1059,7 +1154,7 @@ export type PullRequest = {
     arguments: null;
   }
   draft: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   htmlUrl: {
@@ -1067,7 +1162,7 @@ export type PullRequest = {
     arguments: null;
   }
   number: {
-    type: string;
+    type: number;
     arguments: null;
   }
   prClosedAt: {
@@ -1087,7 +1182,7 @@ export type PullRequest = {
     arguments: null;
   }
   sourceBranch: {
-    type: string;
+    type: Branch;
     arguments: null;
   }
   state: {
@@ -1095,7 +1190,7 @@ export type PullRequest = {
     arguments: null;
   }
   targetBranch: {
-    type: string;
+    type: Branch;
     arguments: null;
   }
   title: {
@@ -1111,7 +1206,7 @@ export type Reference = {
     arguments: null;
   }
   metadata: {
-    type: string;
+    type: ReferenceMetadata;
     arguments: null;
   }
   resource: {
@@ -1125,25 +1220,38 @@ export type Reference = {
 
 }
 
+export type ReferenceMetadata =   | CodeReferenceMetadata  | ImageReferenceMetadata  | PreviewReferenceMetadata  | UserReferenceMetadata;
+
+export enum RegistryType {
+    CUSTOM = "CUSTOM",
+    GITHUB = "GITHUB",
+    NPM = "NPM",
+
+}
+
+export type Repository =   | GitHubRepository;
+
+export type RepositoryEvent =   | InstallationEvent;
+
 export type RootMutationType = {
   acceptTeamInvitation: {
-    type: string;
+    type: Team;
     arguments: {
       teamId: string;
     }
 
   }
   addCollaborator: {
-    type: string;
+    type: Collaborator;
     arguments: {
-      authorization: string;
+      authorization: Authorization;
       sandboxId: string;
       username: string;
     }
 
   }
   addSandboxesToAlbum: {
-    type: string;
+    type: Album;
     arguments: {
       albumId: string;
       sandboxIds: string;
@@ -1151,7 +1259,7 @@ export type RootMutationType = {
 
   }
   addToCollection: {
-    type: string;
+    type: Collection;
     arguments: {
       collectionPath: string;
       sandboxIds: string;
@@ -1160,7 +1268,7 @@ export type RootMutationType = {
 
   }
   addToCollectionOrTeam: {
-    type: string;
+    type: Sandbox;
     arguments: {
       collectionPath: string;
       sandboxIds: string;
@@ -1169,18 +1277,18 @@ export type RootMutationType = {
 
   }
   archiveAllNotifications: {
-    type: string;
+    type: User;
     arguments: null;
   }
   archiveNotification: {
-    type: string;
+    type: Notification;
     arguments: {
       notificationId: string;
     }
 
   }
   bookmarkTemplate: {
-    type: string;
+    type: Template;
     arguments: {
       teamId: string;
       templateId: string;
@@ -1192,37 +1300,37 @@ export type RootMutationType = {
     arguments: null;
   }
   changeCollaboratorAuthorization: {
-    type: string;
+    type: Collaborator;
     arguments: {
-      authorization: string;
+      authorization: Authorization;
       sandboxId: string;
       username: string;
     }
 
   }
   changeSandboxInvitationAuthorization: {
-    type: string;
+    type: Invitation;
     arguments: {
-      authorization: string;
+      authorization: Authorization;
       invitationId: string;
       sandboxId: string;
     }
 
   }
   changeTeamMemberAuthorizations: {
-    type: string;
+    type: Team;
     arguments: {
-      memberAuthorizations: string;
+      memberAuthorizations: MemberAuthorization;
       teamId: string;
     }
 
   }
   clearNotificationCount: {
-    type: string;
+    type: User;
     arguments: null;
   }
   createAlbum: {
-    type: string;
+    type: Album;
     arguments: {
       description: string;
       title: string;
@@ -1230,21 +1338,21 @@ export type RootMutationType = {
 
   }
   createCodeComment: {
-    type: string;
+    type: Comment;
     arguments: {
-      anchorReference: string;
-      codeReferences: string;
+      anchorReference: CodeReference;
+      codeReferences: CodeReference;
       content: string;
       id: string;
-      imageReferences: string;
+      imageReferences: ImageReference;
       parentCommentId: string;
       sandboxId: string;
-      userReferences: string;
+      userReferences: UserReference;
     }
 
   }
   createCollection: {
-    type: string;
+    type: Collection;
     arguments: {
       path: string;
       teamId: string;
@@ -1252,70 +1360,70 @@ export type RootMutationType = {
 
   }
   createComment: {
-    type: string;
+    type: Comment;
     arguments: {
-      codeReference: string;
-      codeReferences: string;
+      codeReference: CodeReference;
+      codeReferences: CodeReference;
       content: string;
       id: string;
-      imageReferences: string;
+      imageReferences: ImageReference;
       parentCommentId: string;
       sandboxId: string;
-      userReferences: string;
+      userReferences: UserReference;
     }
 
   }
   createFeatureFlag: {
-    type: string;
+    type: FeatureFlag;
     arguments: {
       description: string;
-      enabled: string;
+      enabled: boolean;
       name: string;
     }
 
   }
   createOrUpdatePrivateNpmRegistry: {
-    type: string;
+    type: PrivateRegistry;
     arguments: {
-      authType: string;
+      authType: AuthType;
       enabledScopes: string;
-      limitToScopes: string;
-      proxyEnabled: string;
+      limitToScopes: boolean;
+      proxyEnabled: boolean;
       registryAuthKey: string;
-      registryType: string;
+      registryType: RegistryType;
       registryUrl: string;
       teamId: string;
     }
 
   }
   createPreviewComment: {
-    type: string;
+    type: Comment;
     arguments: {
-      anchorReference: string;
-      codeReferences: string;
+      anchorReference: PreviewReference;
+      codeReferences: CodeReference;
       content: string;
       id: string;
-      imageReferences: string;
+      imageReferences: ImageReference;
       parentCommentId: string;
       sandboxId: string;
-      userReferences: string;
+      userReferences: UserReference;
     }
 
   }
   createSandboxInvitation: {
-    type: string;
+    type: Invitation;
     arguments: {
-      authorization: string;
+      authorization: Authorization;
       email: string;
       sandboxId: string;
     }
 
   }
   createTeam: {
-    type: string;
+    type: Team;
     arguments: {
       name: string;
-      pilot: string;
+      pilot: boolean;
     }
 
   }
@@ -1327,7 +1435,7 @@ export type RootMutationType = {
 
   }
   deleteCollection: {
-    type: string;
+    type: Collection;
     arguments: {
       path: string;
       teamId: string;
@@ -1335,7 +1443,7 @@ export type RootMutationType = {
 
   }
   deleteComment: {
-    type: string;
+    type: Comment;
     arguments: {
       commentId: string;
       sandboxId: string;
@@ -1347,14 +1455,14 @@ export type RootMutationType = {
     arguments: null;
   }
   deletePrivateNpmRegistry: {
-    type: string;
+    type: PrivateRegistry;
     arguments: {
       teamId: string;
     }
 
   }
   deleteSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
       sandboxIds: string;
     }
@@ -1368,14 +1476,14 @@ export type RootMutationType = {
 
   }
   disableFeatureFlag: {
-    type: string;
+    type: FeatureFlag;
     arguments: {
       name: string;
     }
 
   }
   disableFeatureFlagForTeam: {
-    type: string;
+    type: TeamsFeatureFlag;
     arguments: {
       featureFlagId: string;
       teamId: string;
@@ -1383,14 +1491,14 @@ export type RootMutationType = {
 
   }
   enableFeatureFlag: {
-    type: string;
+    type: FeatureFlag;
     arguments: {
       name: string;
     }
 
   }
   enableFeatureFlagForTeam: {
-    type: string;
+    type: TeamsFeatureFlag;
     arguments: {
       featureFlagId: string;
       teamId: string;
@@ -1398,16 +1506,16 @@ export type RootMutationType = {
 
   }
   enableTeamBetaAccess: {
-    type: string;
+    type: Team;
     arguments: {
       teamId: string;
     }
 
   }
   inviteToTeam: {
-    type: string;
+    type: Team;
     arguments: {
-      authorization: string;
+      authorization: TeamMemberAuthorization;
       teamId: string;
       username: string;
     }
@@ -1416,7 +1524,7 @@ export type RootMutationType = {
   inviteToTeamViaEmail: {
     type: string;
     arguments: {
-      authorization: string;
+      authorization: TeamMemberAuthorization;
       email: string;
       teamId: string;
     }
@@ -1430,41 +1538,41 @@ export type RootMutationType = {
 
   }
   makeSandboxesTemplates: {
-    type: string;
+    type: Template;
     arguments: {
       sandboxIds: string;
     }
 
   }
   markAllNotificationsAsRead: {
-    type: string;
+    type: User;
     arguments: null;
   }
   markNotificationAsRead: {
-    type: string;
+    type: Notification;
     arguments: {
       notificationId: string;
     }
 
   }
   permanentlyDeleteSandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
       sandboxIds: string;
     }
 
   }
   previewUpdateSubscriptionBillingInterval: {
-    type: string;
+    type: BillingPreview;
     arguments: {
-      billingInterval: string;
+      billingInterval: SubscriptionInterval;
       subscriptionId: string;
       teamId: string;
     }
 
   }
   reactivateSubscription: {
-    type: string;
+    type: ProSubscription;
     arguments: {
       subscriptionId: string;
       teamId: string;
@@ -1472,7 +1580,7 @@ export type RootMutationType = {
 
   }
   redeemSandboxInvitation: {
-    type: string;
+    type: Invitation;
     arguments: {
       invitationToken: string;
       sandboxId: string;
@@ -1480,7 +1588,7 @@ export type RootMutationType = {
 
   }
   redeemTeamInviteToken: {
-    type: string;
+    type: Team;
     arguments: {
       inviteToken: string;
     }
@@ -1494,7 +1602,7 @@ export type RootMutationType = {
 
   }
   removeCollaborator: {
-    type: string;
+    type: Collaborator;
     arguments: {
       sandboxId: string;
       username: string;
@@ -1502,7 +1610,7 @@ export type RootMutationType = {
 
   }
   removeFromTeam: {
-    type: string;
+    type: Team;
     arguments: {
       teamId: string;
       userId: string;
@@ -1510,7 +1618,7 @@ export type RootMutationType = {
 
   }
   removeSandboxesFromAlbum: {
-    type: string;
+    type: Album;
     arguments: {
       albumId: string;
       sandboxIds: string;
@@ -1518,7 +1626,7 @@ export type RootMutationType = {
 
   }
   renameCollection: {
-    type: string;
+    type: Collection;
     arguments: {
       newPath: string;
       newTeamId: string;
@@ -1528,7 +1636,7 @@ export type RootMutationType = {
 
   }
   renameSandbox: {
-    type: string;
+    type: Sandbox;
     arguments: {
       id: string;
       title: string;
@@ -1536,7 +1644,7 @@ export type RootMutationType = {
 
   }
   resolveComment: {
-    type: string;
+    type: Comment;
     arguments: {
       commentId: string;
       sandboxId: string;
@@ -1544,7 +1652,7 @@ export type RootMutationType = {
 
   }
   revokeSandboxInvitation: {
-    type: string;
+    type: Invitation;
     arguments: {
       invitationId: string;
       sandboxId: string;
@@ -1552,7 +1660,7 @@ export type RootMutationType = {
 
   }
   revokeTeamInvitation: {
-    type: string;
+    type: Team;
     arguments: {
       teamId: string;
       userId: string;
@@ -1560,55 +1668,55 @@ export type RootMutationType = {
 
   }
   setDefaultTeamMemberAuthorization: {
-    type: string;
+    type: WorkspaceSandboxSettings;
     arguments: {
-      defaultAuthorization: string;
+      defaultAuthorization: TeamMemberAuthorization;
       teamId: string;
     }
 
   }
   setPreventSandboxesExport: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      preventSandboxExport: string;
+      preventSandboxExport: boolean;
       sandboxIds: string;
     }
 
   }
   setPreventSandboxesLeavingWorkspace: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      preventSandboxLeaving: string;
+      preventSandboxLeaving: boolean;
       sandboxIds: string;
     }
 
   }
   setSandboxAlwaysOn: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      alwaysOn: string;
+      alwaysOn: boolean;
       sandboxId: string;
     }
 
   }
   setSandboxesFrozen: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      isFrozen: string;
+      isFrozen: boolean;
       sandboxIds: string;
     }
 
   }
   setSandboxesPrivacy: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      privacy: string;
+      privacy: number;
       sandboxIds: string;
     }
 
   }
   setTeamDescription: {
-    type: string;
+    type: Team;
     arguments: {
       description: string;
       teamId: string;
@@ -1616,16 +1724,16 @@ export type RootMutationType = {
 
   }
   setTeamMinimumPrivacy: {
-    type: string;
+    type: WorkspaceSandboxSettings;
     arguments: {
-      minimumPrivacy: string;
+      minimumPrivacy: number;
       teamId: string;
-      updateDrafts: string;
+      updateDrafts: boolean;
     }
 
   }
   setTeamName: {
-    type: string;
+    type: Team;
     arguments: {
       name: string;
       teamId: string;
@@ -1633,16 +1741,16 @@ export type RootMutationType = {
 
   }
   setWorkspaceSandboxSettings: {
-    type: string;
+    type: WorkspaceSandboxSettings;
     arguments: {
-      preventSandboxExport: string;
-      preventSandboxLeaving: string;
+      preventSandboxExport: boolean;
+      preventSandboxLeaving: boolean;
       teamId: string;
     }
 
   }
   softCancelSubscription: {
-    type: string;
+    type: ProSubscription;
     arguments: {
       subscriptionId: string;
       teamId: string;
@@ -1650,7 +1758,7 @@ export type RootMutationType = {
 
   }
   unbookmarkTemplate: {
-    type: string;
+    type: Template;
     arguments: {
       teamId: string;
       templateId: string;
@@ -1658,14 +1766,14 @@ export type RootMutationType = {
 
   }
   unmakeSandboxesTemplates: {
-    type: string;
+    type: Template;
     arguments: {
       sandboxIds: string;
     }
 
   }
   unresolveComment: {
-    type: string;
+    type: Comment;
     arguments: {
       commentId: string;
       sandboxId: string;
@@ -1673,7 +1781,7 @@ export type RootMutationType = {
 
   }
   updateAlbum: {
-    type: string;
+    type: Album;
     arguments: {
       description: string;
       id: string;
@@ -1682,19 +1790,19 @@ export type RootMutationType = {
 
   }
   updateComment: {
-    type: string;
+    type: Comment;
     arguments: {
-      codeReferences: string;
+      codeReferences: CodeReference;
       commentId: string;
       content: string;
-      imageReferences: string;
+      imageReferences: ImageReference;
       sandboxId: string;
-      userReferences: string;
+      userReferences: UserReference;
     }
 
   }
   updateCurrentUser: {
-    type: string;
+    type: User;
     arguments: {
       bio: string;
       name: string;
@@ -1704,45 +1812,45 @@ export type RootMutationType = {
 
   }
   updateNotificationPreferences: {
-    type: string;
+    type: NotificationPreferences;
     arguments: {
-      emailCommentMention: string;
-      emailCommentReply: string;
-      emailNewComment: string;
+      emailCommentMention: boolean;
+      emailCommentReply: boolean;
+      emailNewComment: boolean;
     }
 
   }
   updateNotificationReadStatus: {
-    type: string;
+    type: Notification;
     arguments: {
       notificationId: string;
-      read: string;
+      read: boolean;
     }
 
   }
   updateProjectEnvironment: {
-    type: string;
+    type: Project;
     arguments: {
       environmentId: string;
-      gitProvider: string;
+      gitProvider: GitProvider;
       owner: string;
       repo: string;
     }
 
   }
   updateSubscription: {
-    type: string;
+    type: ProSubscription;
     arguments: {
-      quantity: string;
+      quantity: number;
       subscriptionId: string;
       teamId: string;
     }
 
   }
   updateSubscriptionBillingInterval: {
-    type: string;
+    type: ProSubscription;
     arguments: {
-      billingInterval: string;
+      billingInterval: SubscriptionInterval;
       subscriptionId: string;
       teamId: string;
     }
@@ -1753,29 +1861,29 @@ export type RootMutationType = {
 
 export type RootQueryType = {
   album: {
-    type: string;
+    type: Album;
     arguments: {
       albumId: string;
     }
 
   }
   albums: {
-    type: string;
+    type: Album;
     arguments: {
       username: string;
     }
 
   }
   curatedAlbums: {
-    type: string;
+    type: Album;
     arguments: null;
   }
   featureFlags: {
-    type: string;
+    type: FeatureFlag;
     arguments: null;
   }
   git: {
-    type: string;
+    type: Git;
     arguments: {
       branch: string;
       path: string;
@@ -1785,16 +1893,16 @@ export type RootQueryType = {
 
   }
   githubOrganizationRepos: {
-    type: string;
+    type: GithubRepo;
     arguments: {
       organization: string;
-      page: string;
-      perPage: string;
+      page: number;
+      perPage: number;
     }
 
   }
   githubRepo: {
-    type: string;
+    type: GithubRepo;
     arguments: {
       owner: string;
       repo: string;
@@ -1802,27 +1910,27 @@ export type RootQueryType = {
 
   }
   me: {
-    type: string;
+    type: CurrentUser;
     arguments: null;
   }
   project: {
-    type: string;
+    type: Project;
     arguments: {
-      gitProvider: string;
+      gitProvider: GitProvider;
       owner: string;
       repo: string;
     }
 
   }
   sandbox: {
-    type: string;
+    type: Sandbox;
     arguments: {
       sandboxId: string;
     }
 
   }
   teamByToken: {
-    type: string;
+    type: Team;
     arguments: {
       inviteToken: string;
     }
@@ -1833,49 +1941,49 @@ export type RootQueryType = {
 
 export type RootSubscriptionType = {
   collaboratorAdded: {
-    type: string;
+    type: Collaborator;
     arguments: {
       sandboxId: string;
     }
 
   }
   collaboratorChanged: {
-    type: string;
+    type: Collaborator;
     arguments: {
       sandboxId: string;
     }
 
   }
   collaboratorRemoved: {
-    type: string;
+    type: Collaborator;
     arguments: {
       sandboxId: string;
     }
 
   }
   commentAdded: {
-    type: string;
+    type: Comment;
     arguments: {
       sandboxId: string;
     }
 
   }
   commentChanged: {
-    type: string;
+    type: Comment;
     arguments: {
       sandboxId: string;
     }
 
   }
   commentRemoved: {
-    type: string;
+    type: Comment;
     arguments: {
       sandboxId: string;
     }
 
   }
   githubEvents: {
-    type: string;
+    type: RepositoryEvent;
     arguments: {
       owner: string;
       repo: string;
@@ -1883,28 +1991,28 @@ export type RootSubscriptionType = {
 
   }
   invitationChanged: {
-    type: string;
+    type: Invitation;
     arguments: {
       sandboxId: string;
     }
 
   }
   invitationCreated: {
-    type: string;
+    type: Invitation;
     arguments: {
       sandboxId: string;
     }
 
   }
   invitationRemoved: {
-    type: string;
+    type: Invitation;
     arguments: {
       sandboxId: string;
     }
 
   }
   projectCommits: {
-    type: string;
+    type: BranchLastCommit;
     arguments: {
       branchId: string;
       owner: string;
@@ -1913,7 +2021,7 @@ export type RootSubscriptionType = {
 
   }
   projectConnections: {
-    type: string;
+    type: BranchConnections;
     arguments: {
       branchId: string;
       owner: string;
@@ -1922,7 +2030,7 @@ export type RootSubscriptionType = {
 
   }
   projectStatus: {
-    type: string;
+    type: BranchStatus;
     arguments: {
       branchId: string;
       owner: string;
@@ -1931,7 +2039,7 @@ export type RootSubscriptionType = {
 
   }
   sandboxChanged: {
-    type: string;
+    type: Sandbox;
     arguments: {
       sandboxId: string;
     }
@@ -1946,11 +2054,11 @@ export type Sandbox = {
     arguments: null;
   }
   alwaysOn: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   author: {
-    type: string;
+    type: User;
     arguments: null;
   }
   authorId: {
@@ -1958,34 +2066,34 @@ export type Sandbox = {
     arguments: null;
   }
   authorization: {
-    type: string;
+    type: Authorization;
     arguments: null;
   }
   baseGit: {
-    type: string;
+    type: Git;
     arguments: null;
   }
   collaborators: {
-    type: string;
+    type: Collaborator;
     arguments: null;
   }
   collection: {
-    type: string;
+    type: Collection;
     arguments: null;
   }
   comment: {
-    type: string;
+    type: Comment;
     arguments: {
       commentId: string;
     }
 
   }
   comments: {
-    type: string;
+    type: Comment;
     arguments: null;
   }
   customTemplate: {
-    type: string;
+    type: Template;
     arguments: null;
   }
   description: {
@@ -1993,15 +2101,15 @@ export type Sandbox = {
     arguments: null;
   }
   forkCount: {
-    type: string;
+    type: number;
     arguments: null;
   }
   forkedTemplate: {
-    type: string;
+    type: Template;
     arguments: null;
   }
   git: {
-    type: string;
+    type: Git;
     arguments: null;
   }
   id: {
@@ -2013,19 +2121,19 @@ export type Sandbox = {
     arguments: null;
   }
   invitations: {
-    type: string;
+    type: Invitation;
     arguments: null;
   }
   isFrozen: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   isSse: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   isV2: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   lastAccessedAt: {
@@ -2033,23 +2141,23 @@ export type Sandbox = {
     arguments: null;
   }
   likeCount: {
-    type: string;
+    type: number;
     arguments: null;
   }
   originalGit: {
-    type: string;
+    type: Git;
     arguments: null;
   }
   permissions: {
-    type: string;
+    type: SandboxProtectionSettings;
     arguments: null;
   }
   prNumber: {
-    type: string;
+    type: number;
     arguments: null;
   }
   privacy: {
-    type: string;
+    type: number;
     arguments: null;
   }
   removedAt: {
@@ -2057,7 +2165,7 @@ export type Sandbox = {
     arguments: null;
   }
   screenshotOutdated: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   screenshotUrl: {
@@ -2065,11 +2173,11 @@ export type Sandbox = {
     arguments: null;
   }
   source: {
-    type: string;
+    type: Source;
     arguments: null;
   }
   team: {
-    type: string;
+    type: Team;
     arguments: null;
   }
   teamId: {
@@ -2085,7 +2193,7 @@ export type Sandbox = {
     arguments: null;
   }
   viewCount: {
-    type: string;
+    type: number;
     arguments: null;
   }
 
@@ -2093,11 +2201,11 @@ export type Sandbox = {
 
 export type SandboxProtectionSettings = {
   preventSandboxExport: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   preventSandboxLeaving: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
 
@@ -2109,15 +2217,15 @@ export type SandboxV2 = {
     arguments: null;
   }
   authorization: {
-    type: string;
+    type: Authorization;
     arguments: null;
   }
   collaborators: {
-    type: string;
+    type: Collaborator;
     arguments: null;
   }
   gitv2: {
-    type: string;
+    type: GitV2;
     arguments: null;
   }
   id: {
@@ -2129,7 +2237,7 @@ export type SandboxV2 = {
     arguments: null;
   }
   isV2: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   removedAt: {
@@ -2157,19 +2265,19 @@ export type Source = {
 
 export type Status = {
   hasChanges: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   hasConflicts: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   remote: {
-    type: string;
+    type: StatusCommitCounts;
     arguments: null;
   }
   target: {
-    type: string;
+    type: StatusCommitCounts;
     arguments: null;
   }
 
@@ -2177,13 +2285,49 @@ export type Status = {
 
 export type StatusCommitCounts = {
   ahead: {
-    type: string;
+    type: number;
     arguments: null;
   }
   behind: {
-    type: string;
+    type: number;
     arguments: null;
   }
+
+}
+
+export enum SubscriptionInterval {
+    MONTHLY = "MONTHLY",
+    YEARLY = "YEARLY",
+
+}
+
+export enum SubscriptionOrigin {
+    LEGACY = "LEGACY",
+    PATRON = "PATRON",
+    PILOT = "PILOT",
+
+}
+
+export enum SubscriptionPaymentProvider {
+    PADDLE = "PADDLE",
+    STRIPE = "STRIPE",
+
+}
+
+export enum SubscriptionStatus {
+    ACTIVE = "ACTIVE",
+    CANCELLED = "CANCELLED",
+    INCOMPLETE_EXPIRED = "INCOMPLETE_EXPIRED",
+    PAUSED = "PAUSED",
+    TRIALING = "TRIALING",
+    UNKNOWN = "UNKNOWN",
+    UNPAID = "UNPAID",
+
+}
+
+export enum SubscriptionType {
+    PERSONAL_PRO = "PERSONAL_PRO",
+    TEAM_PRO = "TEAM_PRO",
 
 }
 
@@ -2193,15 +2337,15 @@ export type Team = {
     arguments: null;
   }
   beta: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   bookmarkedTemplates: {
-    type: string;
+    type: Template;
     arguments: null;
   }
   collections: {
-    type: string;
+    type: Collection;
     arguments: null;
   }
   creatorId: {
@@ -2213,11 +2357,11 @@ export type Team = {
     arguments: null;
   }
   drafts: {
-    type: string;
+    type: Sandbox;
     arguments: {
       authorId: string;
-      limit: string;
-      orderBy: string;
+      limit: number;
+      orderBy: OrderBy;
     }
 
   }
@@ -2230,7 +2374,7 @@ export type Team = {
     arguments: null;
   }
   invitees: {
-    type: string;
+    type: User;
     arguments: null;
   }
   joinedPilotAt: {
@@ -2242,54 +2386,61 @@ export type Team = {
     arguments: null;
   }
   privateRegistry: {
-    type: string;
+    type: PrivateRegistry;
     arguments: null;
   }
   projects: {
-    type: string;
+    type: Project;
     arguments: {
-      syncData: string;
+      syncData: boolean;
     }
 
   }
   sandboxes: {
-    type: string;
+    type: Sandbox;
     arguments: {
-      alwaysOn: string;
+      alwaysOn: boolean;
       authorId: string;
-      hasOriginalGit: string;
-      limit: string;
-      orderBy: string;
-      showDeleted: string;
+      hasOriginalGit: boolean;
+      limit: number;
+      orderBy: OrderBy;
+      showDeleted: boolean;
     }
 
   }
   settings: {
-    type: string;
+    type: WorkspaceSandboxSettings;
     arguments: null;
   }
   subscription: {
-    type: string;
+    type: ProSubscription;
     arguments: null;
   }
   templates: {
-    type: string;
+    type: Template;
     arguments: null;
   }
   userAuthorizations: {
-    type: string;
+    type: UserAuthorization;
     arguments: null;
   }
   users: {
-    type: string;
+    type: User;
     arguments: null;
   }
 
 }
 
+export enum TeamMemberAuthorization {
+    ADMIN = "ADMIN",
+    READ = "READ",
+    WRITE = "WRITE",
+
+}
+
 export type TeamsFeatureFlag = {
   enabledForTeam: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   featureFlagId: {
@@ -2305,7 +2456,7 @@ export type TeamsFeatureFlag = {
 
 export type Template = {
   bookmarked: {
-    type: string;
+    type: Bookmarked;
     arguments: null;
   }
   color: {
@@ -2329,15 +2480,15 @@ export type Template = {
     arguments: null;
   }
   official: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   published: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   sandbox: {
-    type: string;
+    type: Sandbox;
     arguments: null;
   }
   title: {
@@ -2385,13 +2536,19 @@ export type User = {
 
 export type UserAuthorization = {
   authorization: {
-    type: string;
+    type: TeamMemberAuthorization;
     arguments: null;
   }
   userId: {
     type: string;
     arguments: null;
   }
+
+}
+
+export type UserReference = {
+  userId: string;
+  username: string;
 
 }
 
@@ -2409,19 +2566,19 @@ export type UserReferenceMetadata = {
 
 export type WorkspaceSandboxSettings = {
   defaultAuthorization: {
-    type: string;
+    type: TeamMemberAuthorization;
     arguments: null;
   }
   minimumPrivacy: {
-    type: string;
+    type: number;
     arguments: null;
   }
   preventSandboxExport: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
   preventSandboxLeaving: {
-    type: string;
+    type: boolean;
     arguments: null;
   }
 
