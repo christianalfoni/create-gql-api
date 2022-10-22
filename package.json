@@ -1,0 +1,30 @@
+{
+  "name": "create-gql-api",
+  "version": "1.0.0",
+  "description": "Simplify GQL typing and consumption",
+  "main": "index.js",
+  "dependencies": {
+    "get-graphql-schema": "^2.1.2"
+  },
+  "scripts": {
+    "dev": "yarn build && node ./bin/index.js https://codesandbox.stream/api/graphql",
+    "build": "esbuild src/index.ts --bundle --platform=node --external:./node_modules/* --outfile=bin/index.js",
+    "wtf": "get-graphql-schema https://codesandbox.stream/api/graphql --json > schema.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/christianalfoni/create-gql-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/christianalfoni/create-gql-api/issues"
+  },
+  "homepage": "https://github.com/christianalfoni/create-gql-api#readme",
+  "devDependencies": {
+    "@types/node": "^18.11.3",
+    "esbuild": "^0.15.12",
+    "graphql": "^16.6.0"
+  }
+}
