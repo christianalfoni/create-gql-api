@@ -44,6 +44,15 @@ function getNamedTypeNode(type) {
   }
   return getNamedTypeNode(type.type);
 }
+function isListTypeNode(type) {
+  if (type.kind === GQL.Kind.NAMED_TYPE) {
+    return false;
+  }
+  if (type.kind === GQL.Kind.LIST_TYPE) {
+    return true;
+  }
+  return isListTypeNode(type.type);
+}
 function createValueType(value) {
   if (value === "String" || value === "UUID4" || value === "ID" || value === "DateTime" || value === "NaiveDateTime" || value === "Base64") {
     return "string";
@@ -70,8 +79,10 @@ function createArguments(args) {
   return argsType + "    }\n";
 }
 function createObjectField(field) {
+  const isList = isListTypeNode(field.type);
   return `${field.name.value}: {
     type: ${createValueType(getNamedTypeNode(field.type).name.value)};
+    isList: ${isList};
     arguments: ${field.arguments && field.arguments.length ? createArguments(field.arguments) : "null;"}
   }
 `;

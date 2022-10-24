@@ -34,6 +34,18 @@ function getNamedTypeNode(type: GQL.TypeNode): GQL.NamedTypeNode {
   return getNamedTypeNode(type.type);
 }
 
+function isListTypeNode(type: GQL.TypeNode): boolean {
+  if (type.kind === GQL.Kind.NAMED_TYPE) {
+    return false;
+  }
+
+  if (type.kind === GQL.Kind.LIST_TYPE) {
+    return true;
+  }
+
+  return isListTypeNode(type.type);
+}
+
 function createValueType(value: string) {
   if (
     value === "String" ||
@@ -72,8 +84,11 @@ function createArguments(args: readonly GQL.InputValueDefinitionNode[]) {
 }
 
 function createObjectField(field: GQL.FieldDefinitionNode) {
+  const isList = isListTypeNode(field.type);
+
   return `${field.name.value}: {
     type: ${createValueType(getNamedTypeNode(field.type).name.value)};
+    isList: ${isList};
     arguments: ${
       field.arguments && field.arguments.length
         ? createArguments(field.arguments)
