@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "yarn build && node ./bin/index.js https://codesandbox.stream/api/graphql",
     "build": "esbuild src/index.ts --bundle --platform=node --external:./node_modules/* --outfile=bin/index.js",
-    "wtf": "get-graphql-schema https://codesandbox.stream/api/graphql --json > schema.json"
+    "build-test": "esbuild test-consumption.ts --bundle --platform=node --external:./node_modules/* --outfile=test-consumption.js"
   },
   "repository": {
     "type": "git",

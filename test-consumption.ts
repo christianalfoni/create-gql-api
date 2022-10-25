@@ -113,13 +113,22 @@ function createQueryString(query: Query, level = 1) {
   for (const field in query.$FIELDS) {
     const value = query.$FIELDS[field];
     if (value === true) {
-      string += " ".repeat(level) + "\n";
+      string += "  ".repeat(level) + field + "\n";
     } else if (value) {
-      string += " ".repeat(level) + field + createQueryString(value, level + 1);
+      string +=
+        "  ".repeat(level) + field + " " + createQueryString(value, level + 1);
     }
   }
 
-  string += " ".repeat(level) + "}";
+  for (const field in query.$CUSTOM) {
+    const value = query.$CUSTOM[field];
+    if (value) {
+      string +=
+        "  ".repeat(level) + field + " " + createQueryString(value, level + 1);
+    }
+  }
+
+  string += "  ".repeat(level - 1) + "}\n";
 
   return string;
 }
@@ -153,20 +162,25 @@ const createQueryApi =
     return request(
       `query ${name} (${Object.keys(variables)
         .map((key) => "$" + key.toUpperCase())
-        .join(", ")}) {
-  ${createQueryString(query)}
-}`,
-      variables
+        .join(", ")}) ${createQueryString(query)}`,
+      Object.keys(variables).reduce<Record<string, unknown>>((aggr, key) => {
+        aggr["$" + key.toUpperCase()] = variables[key];
+
+        return aggr;
+      }, {}) as V
     ) as Promise<ResolveQuery<T, RootQueryType>>;
   };
 
-const createQuery = createQueryApi(() => Promise.resolve());
+const createQuery = createQueryApi((query, variables) => {
+  console.log(query, variables);
+  return Promise.resolve();
+});
 
-const queryAlbums = createQuery("Albums", (props: { $USERNAME: string }) => ({
+const queryAlbums = createQuery("Albums", (props: { username: string }) => ({
   $FIELDS: {
     albums: {
       $ARGS: {
-        username: props.$USERNAME,
+        username: props.username,
       },
       $FIELDS: {
         sandboxes: {
@@ -188,7 +202,7 @@ const queryAlbums = createQuery("Albums", (props: { $USERNAME: string }) => ({
   $CUSTOM: {
     albums2: {
       $FIELD: "albums",
-      $ARGS: { username: "" },
+      $ARGS: { username: props.username },
       $FIELDS: {
         id: true,
       },
@@ -197,7 +211,7 @@ const queryAlbums = createQuery("Albums", (props: { $USERNAME: string }) => ({
 }));
 
 async function test() {
-  const test = await queryAlbums({ $USERNAME: "" });
-
-  test.albums[0].sandboxes[0].collabs.id;
+  const test = await queryAlbums({ username: "" });
 }
+
+test();
