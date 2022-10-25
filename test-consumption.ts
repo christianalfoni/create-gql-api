@@ -45,6 +45,7 @@ type MakeQueryable<T extends QueryObject> =
 
 type CustomQuery = {
   $FIELD: string;
+  $ARGS?: Record<string, unknown>;
   $FIELDS: {
     [key: string]: Query | boolean;
   };
@@ -54,6 +55,7 @@ type Query = {
   $FIELDS: {
     [key: string]: Query | boolean;
   };
+  $ARGS?: Record<string, unknown>;
   $CUSTOM?: {
     [key: string]: CustomQuery | undefined;
   };
@@ -84,38 +86,87 @@ type ResolveQuery<T extends Query, Q extends QueryObject> = {
       ? Q[T["$CUSTOM"][K]["$FIELD"]] extends { isList: true }
         ? Array<
             ResolveQueryField<
-              T["$FIELDS"][T["$CUSTOM"][K]["$FIELD"]],
+              T["$CUSTOM"][K],
               Q[T["$CUSTOM"][K]["$FIELD"]]["type"]
             >
           >
         : ResolveQueryField<
-            T["$FIELDS"][T["$CUSTOM"][K]["$FIELD"]],
+            T["$CUSTOM"][K],
             Q[T["$CUSTOM"][K]["$FIELD"]]["type"]
           >
       : never
     : never;
 };
 
-const createQuery =
-  (request: (query: string) => Promise<unknown>) =>
+function createQueryString(query: Query, level = 1) {
+  let string = "";
+
+  if (query.$ARGS) {
+    const args = query.$ARGS;
+    string += `(${Object.keys(args).reduce((aggr, key) => {
+      return aggr + `${key}: ${args[key]}`;
+    }, "")}) {\n`;
+  } else {
+    string += "{\n";
+  }
+
+  for (const field in query.$FIELDS) {
+    const value = query.$FIELDS[field];
+    if (value === true) {
+      string += " ".repeat(level) + "\n";
+    } else if (value) {
+      string += " ".repeat(level) + field + createQueryString(value, level + 1);
+    }
+  }
+
+  string += " ".repeat(level) + "}";
+
+  return string;
+}
+
+const createQueryApi =
+  (
+    request: (
+      query: string,
+      variables: Record<string, unknown>
+    ) => Promise<unknown>
+  ) =>
   <
+    V extends Record<string, unknown>,
     T extends {
       $FIELDS: MakeQueryable<RootQueryType>;
       $CUSTOM?: MakeCustomQueryable<RootQueryType>;
     }
   >(
-    query: T
-  ): Promise<ResolveQuery<T, RootQueryType>> => {
-    return {} as any;
+    name: string,
+    cb: (variables: V) => T
+  ) =>
+  (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
+    const query = cb(
+      Object.keys(variables).reduce<Record<string, string>>((aggr, key) => {
+        aggr[key] = "$" + key.toUpperCase();
+
+        return aggr;
+      }, {}) as V
+    );
+
+    return request(
+      `query ${name} (${Object.keys(variables)
+        .map((key) => "$" + key.toUpperCase())
+        .join(", ")}) {
+  ${createQueryString(query)}
+}`,
+      variables
+    ) as Promise<ResolveQuery<T, RootQueryType>>;
   };
 
-const query = createQuery(() => Promise.resolve());
+const createQuery = createQueryApi(() => Promise.resolve());
 
-const response = query({
+const queryAlbums = createQuery("Albums", (props: { $USERNAME: string }) => ({
   $FIELDS: {
     albums: {
       $ARGS: {
-        username: "",
+        username: props.$USERNAME,
       },
       $FIELDS: {
         sandboxes: {
@@ -143,8 +194,10 @@ const response = query({
       },
     },
   },
-});
+}));
 
-response.then((resp) => {
-  resp.albums[0].sandboxes[0];
-});
+async function test() {
+  const test = await queryAlbums({ $USERNAME: "" });
+
+  test.albums[0].sandboxes[0].collabs.id;
+}
