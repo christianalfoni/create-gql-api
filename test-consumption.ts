@@ -19,9 +19,9 @@ type MakeCustomQueryable<T extends QueryObject> = {
           }
         : {
             $FIELD: K;
-            $FIELDS: MakeQueryable<T[K]["type"]> | boolean;
+            $FIELDS: MakeQueryable<T[K]["type"]>;
           }
-      : boolean;
+      : never;
   }[keyof T];
 };
 
@@ -43,50 +43,92 @@ type MakeQueryable<T extends QueryObject> =
         : boolean;
     };
 
+type CustomQuery = {
+  $FIELD: string;
+  $FIELDS: {
+    [key: string]: Query | boolean;
+  };
+};
+
 type Query = {
   $FIELDS: {
     [key: string]: Query | boolean;
   };
-  /*
-    $CUSTOM?: {
-    [key: string]: {
-      $FIELD: string;
-      $FIELDS: {
-        [key: string]: Query | boolean;
-      };
-    };
+  $CUSTOM?: {
+    [key: string]: CustomQuery | undefined;
   };
-  */
 };
+
+type ResolveQueryField<
+  T extends true | boolean | Query,
+  K extends unknown
+> = T extends true
+  ? K
+  : T extends boolean
+  ? K | undefined
+  : T extends Query
+  ? K extends QueryObject
+    ? ResolveQuery<T, K>
+    : never
+  : never;
 
 type ResolveQuery<T extends Query, Q extends QueryObject> = {
   [K in keyof T["$FIELDS"]]: K extends keyof Q
     ? Q[K] extends { isList: true }
-      ? Array<Q[K]["type"]>
-      : Q[K]["type"]
+      ? Array<ResolveQueryField<T["$FIELDS"][K], Q[K]["type"]>>
+      : ResolveQueryField<T["$FIELDS"][K], Q[K]["type"]>
+    : never;
+} & {
+  [K in keyof T["$CUSTOM"]]: T["$CUSTOM"][K] extends CustomQuery
+    ? T["$CUSTOM"][K]["$FIELD"] extends keyof Q
+      ? Q[T["$CUSTOM"][K]["$FIELD"]] extends { isList: true }
+        ? Array<
+            ResolveQueryField<
+              T["$FIELDS"][T["$CUSTOM"][K]["$FIELD"]],
+              Q[T["$CUSTOM"][K]["$FIELD"]]["type"]
+            >
+          >
+        : ResolveQueryField<
+            T["$FIELDS"][T["$CUSTOM"][K]["$FIELD"]],
+            Q[T["$CUSTOM"][K]["$FIELD"]]["type"]
+          >
+      : never
     : never;
 };
 
-const query = <
-  T extends {
-    $FIELDS: MakeQueryable<RootQueryType>;
-    $CUSTOM?: MakeCustomQueryable<RootQueryType>;
-  }
->(
-  query: T
-): ResolveQuery<T, RootQueryType> => {
-  return {} as any;
-};
+const createQuery =
+  (request: (query: string) => Promise<unknown>) =>
+  <
+    T extends {
+      $FIELDS: MakeQueryable<RootQueryType>;
+      $CUSTOM?: MakeCustomQueryable<RootQueryType>;
+    }
+  >(
+    query: T
+  ): Promise<ResolveQuery<T, RootQueryType>> => {
+    return {} as any;
+  };
 
-const mip = query({
+const query = createQuery(() => Promise.resolve());
+
+const response = query({
   $FIELDS: {
     albums: {
-      $ARGS: { username: "hey" },
+      $ARGS: {
+        username: "",
+      },
       $FIELDS: {
-        id: true,
         sandboxes: {
           $FIELDS: {
             alias: true,
+          },
+          $CUSTOM: {
+            collabs: {
+              $FIELD: "team",
+              $FIELDS: {
+                id: true,
+              },
+            },
           },
         },
       },
@@ -95,10 +137,14 @@ const mip = query({
   $CUSTOM: {
     albums2: {
       $FIELD: "albums",
-      $ARGS: { username: "23" },
+      $ARGS: { username: "" },
       $FIELDS: {
         id: true,
       },
     },
   },
+});
+
+response.then((resp) => {
+  resp.albums[0].sandboxes[0];
 });
