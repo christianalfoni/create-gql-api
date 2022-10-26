@@ -5,7 +5,8 @@
   "main": "index.js",
   "bin": "bin/index.js",
   "dependencies": {
-    "get-graphql-schema": "^2.1.2"
+    "get-graphql-schema": "^2.1.2",
+    "graphql": "^16.6.0"
   },
   "files": [
     "bin"
@@ -28,7 +29,6 @@
   "homepage": "https://github.com/christianalfoni/create-gql-api#readme",
   "devDependencies": {
     "@types/node": "^18.11.3",
-    "esbuild": "^0.15.12",
-    "graphql": "^16.6.0"
+    "esbuild": "^0.15.12"
   }
 }
