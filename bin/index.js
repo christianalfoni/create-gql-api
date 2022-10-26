@@ -174,6 +174,7 @@ function createRootTypes(definitions) {
   return types;
 }
 fs.writeFileSync(
-  path.join(process.cwd(), "test.ts"),
-  createRootTypes(schema.definitions)
+  path.join(process.cwd(), "gql_api.ts"),
+  `${createRootTypes(schema.definitions)}
+${fs.readFileSync(path.join(__dirname, "api.ts")).toString()}`
 );

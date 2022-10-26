@@ -3,12 +3,16 @@
   "version": "1.0.0",
   "description": "Simplify GQL typing and consumption",
   "main": "index.js",
+  "bin": "bin/index.js",
   "dependencies": {
     "get-graphql-schema": "^2.1.2"
   },
+  "files": [
+    "bin"
+  ],
   "scripts": {
     "dev": "yarn build && node ./bin/index.js https://codesandbox.stream/api/graphql",
-    "build": "esbuild src/index.ts --bundle --platform=node --external:./node_modules/* --outfile=bin/index.js",
+    "build": "esbuild src/index.ts --bundle --platform=node --external:./node_modules/* --outfile=bin/index.js && cp src/api.ts bin/api.ts",
     "build-test": "esbuild test-consumption.ts --bundle --platform=node --external:./node_modules/* --outfile=test-consumption.js"
   },
   "repository": {

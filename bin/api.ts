@@ -1,5 +1,3 @@
-import { Album, RootQueryType, Sandbox } from "./test";
-
 type QueryObject = Record<
   string,
   {
@@ -32,19 +30,20 @@ type MakeQueryable<T extends QueryObject> =
           ? {
               $ARGS: T[K]["arguments"];
               $FIELDS: MakeQueryable<T[K]["type"]>;
-              $CUSTOM?: MakeCustomQueryable<T[K]["type"]>;
+              $ALIAS?: MakeCustomQueryable<T[K]["type"]>;
             }
           :
               | boolean
               | {
                   $FIELDS: MakeQueryable<T[K]["type"]>;
-                  $CUSTOM?: MakeCustomQueryable<T[K]["type"]>;
+                  $ALIAS?: MakeCustomQueryable<T[K]["type"]>;
                 }
         : boolean;
     };
 
 type CustomQuery = {
   $FIELD: string;
+  // This is not really optional, but simplifies internal typing
   $ARGS?: Record<string, unknown>;
   $FIELDS: {
     [key: string]: Query | boolean;
@@ -56,7 +55,7 @@ type Query = {
     [key: string]: Query | boolean;
   };
   $ARGS?: Record<string, unknown>;
-  $CUSTOM?: {
+  $ALIAS?: {
     [key: string]: CustomQuery | undefined;
   };
 };
@@ -81,19 +80,21 @@ type ResolveQuery<T extends Query, Q extends QueryObject> = {
       : ResolveQueryField<T["$FIELDS"][K], Q[K]["type"]>
     : never;
 } & {
-  [K in keyof T["$CUSTOM"]]: T["$CUSTOM"][K] extends CustomQuery
-    ? T["$CUSTOM"][K]["$FIELD"] extends keyof Q
-      ? Q[T["$CUSTOM"][K]["$FIELD"]] extends { isList: true }
-        ? Array<
-            ResolveQueryField<
-              T["$CUSTOM"][K],
-              Q[T["$CUSTOM"][K]["$FIELD"]]["type"]
+  [K in keyof T["$ALIAS"]]: T["$ALIAS"][K] extends CustomQuery
+    ? T["$ALIAS"][K]["$FIELD"] extends keyof Q
+      ? Q[T["$ALIAS"][K]["$FIELD"]]["arguments"] extends Record<string, unknown>
+        ? Q[T["$ALIAS"][K]["$FIELD"]] extends { isList: true }
+          ? Array<
+              ResolveQueryField<
+                T["$ALIAS"][K],
+                Q[T["$ALIAS"][K]["$FIELD"]]["type"]
+              >
             >
-          >
-        : ResolveQueryField<
-            T["$CUSTOM"][K],
-            Q[T["$CUSTOM"][K]["$FIELD"]]["type"]
-          >
+          : ResolveQueryField<
+              T["$ALIAS"][K],
+              Q[T["$ALIAS"][K]["$FIELD"]]["type"]
+            >
+        : never
       : never
     : never;
 };
@@ -120,11 +121,16 @@ function createQueryString(query: Query, level = 1) {
     }
   }
 
-  for (const field in query.$CUSTOM) {
-    const value = query.$CUSTOM[field];
+  for (const field in query.$ALIAS) {
+    const value = query.$ALIAS[field];
     if (value) {
       string +=
-        "  ".repeat(level) + field + " " + createQueryString(value, level + 1);
+        "  ".repeat(level) +
+        field +
+        ": " +
+        value.$FIELD +
+        " " +
+        createQueryString(value, level + 1);
     }
   }
 
@@ -133,7 +139,7 @@ function createQueryString(query: Query, level = 1) {
   return string;
 }
 
-const createQueryApi =
+export const createQueryApi =
   (
     request: (
       query: string,
@@ -144,7 +150,7 @@ const createQueryApi =
     V extends Record<string, unknown>,
     T extends {
       $FIELDS: MakeQueryable<RootQueryType>;
-      $CUSTOM?: MakeCustomQueryable<RootQueryType>;
+      $ALIAS?: MakeCustomQueryable<RootQueryType>;
     }
   >(
     name: string,
@@ -170,48 +176,3 @@ const createQueryApi =
       }, {}) as V
     ) as Promise<ResolveQuery<T, RootQueryType>>;
   };
-
-const createQuery = createQueryApi((query, variables) => {
-  console.log(query, variables);
-  return Promise.resolve();
-});
-
-const queryAlbums = createQuery("Albums", (props: { username: string }) => ({
-  $FIELDS: {
-    albums: {
-      $ARGS: {
-        username: props.username,
-      },
-      $FIELDS: {
-        sandboxes: {
-          $FIELDS: {
-            alias: true,
-          },
-          $CUSTOM: {
-            collabs: {
-              $FIELD: "team",
-              $FIELDS: {
-                id: true,
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  $CUSTOM: {
-    albums2: {
-      $FIELD: "albums",
-      $ARGS: { username: props.username },
-      $FIELDS: {
-        id: true,
-      },
-    },
-  },
-}));
-
-async function test() {
-  const test = await queryAlbums({ username: "" });
-}
-
-test();

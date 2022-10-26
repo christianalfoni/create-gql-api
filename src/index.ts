@@ -205,28 +205,7 @@ function createRootTypes(definitions: GQL.DocumentNode["definitions"]) {
 }
 
 fs.writeFileSync(
-  path.join(process.cwd(), "test.ts"),
-  createRootTypes(schema.definitions)
+  path.join(process.cwd(), "gql_api.ts"),
+  `${createRootTypes(schema.definitions)}
+${fs.readFileSync(path.join(__dirname, "api.ts")).toString()}`
 );
-
-// console.log(lookup.RootQueryType.fields[0].arguments[0].type);
-
-// Produce TS types out of going through definitions, using lookup
-// Entry point "lookup.RootQueryType"
-
-/**
- 
- type SomeFieldType {
-   fields: {}
-   arguments: {} | null
-   
- } 
- 
-  
- querySomething({}, {
-   fieldA: true,
-   fieldB: [{}],
-   fieldC: [{}, {}],
-   customField: ['fieldC', {}, {}]
- })
- */
