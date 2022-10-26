@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env node
 import { execSync } from "child_process";
 const url = process.argv[2];
 const pathToGetGqlSchema = require.resolve("get-graphql-schema/dist/index.js");
