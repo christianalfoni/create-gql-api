@@ -12,7 +12,7 @@
     "bin"
   ],
   "scripts": {
-    "dev": "yarn build && node ./bin/index.js https://codesandbox.stream/api/graphql",
+    "dev": "yarn build && ./bin/index.js https://codesandbox.stream/api/graphql",
     "build": "esbuild src/index.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=bin/index.js && cp src/api.ts bin/api.ts"
   },
   "repository": {

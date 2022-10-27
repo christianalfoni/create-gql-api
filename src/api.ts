@@ -1,136 +1,143 @@
-type QueryObject = Record<
-  string,
-  {
-    type: unknown;
-    arguments: Record<string, unknown> | null;
-  }
->;
+type FieldQuery<A extends Record<string, unknown>, T> = T & { __: A };
 
-type MakeCustomQueryable<T extends QueryObject> = {
-  [key: string]: {
-    [K in keyof T]?: T[K]["type"] extends QueryObject
-      ? T[K]["arguments"] extends Record<string, unknown>
-        ? {
-            $FIELD: K;
-            $ARGS: T[K]["arguments"];
-            $FIELDS: MakeQueryable<T[K]["type"]>;
-          }
-        : {
-            $FIELD: K;
-            $FIELDS: MakeQueryable<T[K]["type"]>;
-          }
-      : never;
-  }[keyof T];
+type ListQuery<
+  A extends Record<string, unknown>,
+  T extends Record<string, unknown>
+> = Array<T> & { __: A };
+
+type ListQueryDefinition = [
+  Record<string, unknown>,
+  QueryDefinition,
+  ...never[]
+];
+
+type FieldQueryDefinition = [Record<string, unknown>, ...never[]];
+
+type AliasQueryDefinition = { $ALIAS: string; $QUERY: ListQueryDefinition };
+
+type QueryDefinition = {
+  [key: string]:
+    | boolean
+    | ListQueryDefinition
+    | FieldQueryDefinition
+    | AliasQueryDefinition
+    | QueryDefinition;
 };
 
-type MakeQueryable<T extends QueryObject> =
+type ResolveQueryDefinition<T extends Record<string, unknown>> =
   | {
-      [K in keyof T]?: T[K]["type"] extends QueryObject
-        ? T[K]["arguments"] extends Record<string, unknown>
-          ? {
-              $ARGS: T[K]["arguments"];
-              $FIELDS: MakeQueryable<T[K]["type"]>;
-              $ALIAS?: MakeCustomQueryable<T[K]["type"]>;
-            }
-          :
-              | boolean
-              | {
-                  $FIELDS: MakeQueryable<T[K]["type"]>;
-                  $ALIAS?: MakeCustomQueryable<T[K]["type"]>;
-                }
+      [K in keyof T]?: T[K] extends ListQuery<infer A, infer B>
+        ? [A, ResolveQueryDefinition<B>, ...never[]]
+        : T[K] extends FieldQuery<infer A, unknown>
+        ? [A, ...never[]]
+        : T[K] extends Record<string, unknown>
+        ? ResolveQueryDefinition<T[K]>
         : boolean;
+    } & {
+      [key: string]:
+        | {
+            [K in keyof T]: T[K] extends ListQuery<infer A, infer B>
+              ? {
+                  $ALIAS: K;
+                  $QUERY: [A, ResolveQueryDefinition<B>, ...never[]];
+                }
+              : never;
+          }[keyof T]
+        | ListQueryDefinition
+        | FieldQueryDefinition
+        | ResolveQueryDefinition<{}>
+        | boolean;
     };
 
-type CustomQuery = {
-  $FIELD: string;
-  // This is not really optional, but simplifies internal typing
-  $ARGS?: Record<string, unknown>;
-  $FIELDS: {
-    [key: string]: Query | boolean;
-  };
-};
-
-type Query = {
-  $FIELDS: {
-    [key: string]: Query | boolean;
-  };
-  $ARGS?: Record<string, unknown>;
-  $ALIAS?: {
-    [key: string]: CustomQuery | undefined;
-  };
-};
-
-type ResolveQueryField<
-  T extends true | boolean | Query,
-  K extends unknown
-> = T extends true
-  ? K
-  : T extends boolean
-  ? K | undefined
-  : T extends Query
-  ? K extends QueryObject
-    ? ResolveQuery<T, K>
-    : never
-  : never;
-
-type ResolveQuery<T extends Query, Q extends QueryObject> = {
-  [K in keyof T["$FIELDS"]]: K extends keyof Q
-    ? Q[K] extends { isList: true }
-      ? Array<ResolveQueryField<T["$FIELDS"][K], Q[K]["type"]>>
-      : ResolveQueryField<T["$FIELDS"][K], Q[K]["type"]>
-    : never;
-} & {
-  [K in keyof T["$ALIAS"]]: T["$ALIAS"][K] extends CustomQuery
-    ? T["$ALIAS"][K]["$FIELD"] extends keyof Q
-      ? Q[T["$ALIAS"][K]["$FIELD"]]["arguments"] extends Record<string, unknown>
-        ? Q[T["$ALIAS"][K]["$FIELD"]] extends { isList: true }
-          ? Array<
-              ResolveQueryField<
-                T["$ALIAS"][K],
-                Q[T["$ALIAS"][K]["$FIELD"]]["type"]
-              >
-            >
-          : ResolveQueryField<
-              T["$ALIAS"][K],
-              Q[T["$ALIAS"][K]["$FIELD"]]["type"]
-            >
+type ResolveQuery<
+  T extends QueryDefinition,
+  U extends Record<string, unknown>
+> = {
+  [K in keyof T]: T[K] extends AliasQueryDefinition
+    ? T[K]["$ALIAS"] extends keyof U
+      ? T[K]["$QUERY"] extends ListQueryDefinition
+        ? U[T[K]["$ALIAS"]] extends ListQuery<any, infer Q>
+          ? Array<ResolveQuery<T[K]["$QUERY"][1], Q>>
+          : U[T[K]["$ALIAS"]] extends FieldQuery<any, infer Q>
+          ? Q
+          : U[T[K]["$ALIAS"]]
         : never
       : never
+    : K extends keyof U
+    ? T[K] extends ListQueryDefinition
+      ? U[K] extends ListQuery<any, infer Q>
+        ? Array<ResolveQuery<T[K][1], Q>>
+        : U[K] extends FieldQuery<any, infer Q>
+        ? Q
+        : never
+      : T[K] extends QueryDefinition
+      ? U[K] extends Record<string, unknown>
+        ? ResolveQuery<T[K], U[K]>
+        : U[K]
+      : U[K]
     : never;
 };
 
-function createQueryString(query: Query, level = 1) {
+function createQueryString(queryDefinition: QueryDefinition, level = 1) {
+  let alias = "$ALIAS" in queryDefinition ? queryDefinition.$ALIAS : undefined;
+  let query =
+    "$ALIAS" in queryDefinition ? queryDefinition.$QUERY : queryDefinition;
+
   let string = "";
 
-  if (query.$ARGS) {
-    const args = query.$ARGS;
+  if (alias) {
+    string += "  ".repeat(level) + alias + ": ";
+  }
+
+  if (Array.isArray(query) && query.length === 1) {
+    const args = query[0] as Record<string, unknown>;
+
+    string += `(${Object.keys(args).reduce((aggr, key) => {
+      return aggr + `${key}: ${args[key]}`;
+    }, "")})\n`;
+
+    string += "  ".repeat(level - 1) + "}\n";
+
+    return string;
+  }
+
+  if (Array.isArray(query) && query.length === 2) {
+    const args = query[0] as Record<string, unknown>;
+    const queryArg = query[1] as Record<string, unknown>;
+
     string += `(${Object.keys(args).reduce((aggr, key) => {
       return aggr + `${key}: ${args[key]}`;
     }, "")}) {\n`;
-  } else {
-    string += "{\n";
+
+    for (const field in queryArg) {
+      const value = queryArg[field];
+      if (value === true) {
+        string += "  ".repeat(level) + field + "\n";
+      } else if (value) {
+        string +=
+          "  ".repeat(level) +
+          field +
+          " " +
+          createQueryString(value as QueryDefinition, level + 1);
+      }
+    }
+
+    string += "  ".repeat(level - 1) + "}\n";
+
+    return string;
   }
 
-  for (const field in query.$FIELDS) {
-    const value = query.$FIELDS[field];
+  for (const field in query as QueryDefinition) {
+    const value = (query as QueryDefinition)[field];
+
     if (value === true) {
       string += "  ".repeat(level) + field + "\n";
     } else if (value) {
       string +=
-        "  ".repeat(level) + field + " " + createQueryString(value, level + 1);
-    }
-  }
-
-  for (const field in query.$ALIAS) {
-    const value = query.$ALIAS[field];
-    if (value) {
-      string +=
         "  ".repeat(level) +
         field +
-        ": " +
-        value.$FIELD +
         " " +
-        createQueryString(value, level + 1);
+        createQueryString(value as QueryDefinition, level + 1);
     }
   }
 
@@ -147,32 +154,41 @@ export const createQueryApi =
     ) => Promise<unknown>
   ) =>
   <
-    V extends Record<string, unknown>,
-    T extends {
-      $FIELDS: MakeQueryable<RootQueryType>;
-      $ALIAS?: MakeCustomQueryable<RootQueryType>;
-    }
+    V extends Record<string, unknown> | void,
+    T extends ResolveQueryDefinition<RootQueryType>
   >(
     name: string,
     cb: (variables: V) => T
   ) =>
   (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
     const query = cb(
-      Object.keys(variables).reduce<Record<string, string>>((aggr, key) => {
-        aggr[key] = "$" + key.toUpperCase();
+      Object.keys(variables || {}).reduce<Record<string, string>>(
+        (aggr, key) => {
+          aggr[key] = "$" + key.toUpperCase();
 
-        return aggr;
-      }, {}) as V
+          return aggr;
+        },
+        {}
+      ) as V
     );
 
     return request(
-      `query ${name} (${Object.keys(variables)
-        .map((key) => "$" + key.toUpperCase())
-        .join(", ")}) ${createQueryString(query)}`,
-      Object.keys(variables).reduce<Record<string, unknown>>((aggr, key) => {
-        aggr["$" + key.toUpperCase()] = variables[key];
+      `query ${name} ${
+        variables
+          ? `(${Object.keys(variables)
+              .map((key) => "$" + key.toUpperCase())
+              .join(", ")})`
+          : ""
+      } ${createQueryString(query)}`,
+      variables
+        ? Object.keys(variables).reduce<Record<string, unknown>>(
+            (aggr, key) => {
+              aggr["$" + key.toUpperCase()] = variables[key];
 
-        return aggr;
-      }, {}) as V
+              return aggr;
+            },
+            {}
+          )
+        : {}
     ) as Promise<ResolveQuery<T, RootQueryType>>;
   };
