@@ -10,22 +10,6 @@ const result = execSync(`node ${pathToGetGqlSchema} ${url}`);
 
 const schema = GQL.parse(String(result));
 
-function createObjectTypeDefinitionLookup(
-  definitions: GQL.DocumentNode["definitions"]
-) {
-  const lookup: Record<string, GQL.ObjectTypeDefinitionNode> = {};
-
-  for (const definition of definitions) {
-    if (definition.kind === "ObjectTypeDefinition") {
-      lookup[definition.name.value] = definition;
-    }
-  }
-
-  return lookup;
-}
-
-const lookup = createObjectTypeDefinitionLookup(schema.definitions);
-
 function getNamedTypeNode(type: GQL.TypeNode): GQL.NamedTypeNode {
   if (type.kind === GQL.Kind.NAMED_TYPE) {
     return type;
@@ -78,23 +62,35 @@ function createArgument(arg: GQL.InputValueDefinitionNode) {
 function createArguments(args: readonly GQL.InputValueDefinitionNode[]) {
   let argsType = "{\n";
   for (const arg of args) {
-    argsType += `    ${createArgument(arg)};\n`;
+    argsType += `  ${createArgument(arg)};\n`;
   }
-  return argsType + "    }\n";
+  return argsType + "  }";
 }
 
 function createObjectField(field: GQL.FieldDefinitionNode) {
   const isList = isListTypeNode(field.type);
 
-  return `${field.name.value}: {
-    type: ${createValueType(getNamedTypeNode(field.type).name.value)};
-    isList: ${isList};
-    arguments: ${
-      field.arguments && field.arguments.length
-        ? createArguments(field.arguments)
-        : "null;"
-    }
-  }\n`;
+  if (isList && field.arguments && field.arguments.length) {
+    return `${field.name.value}: ListQuery<${createArguments(
+      field.arguments
+    )}, ${createValueType(getNamedTypeNode(field.type).name.value)}>\n`;
+  }
+
+  if (isList) {
+    return `${field.name.value}: ${createValueType(
+      getNamedTypeNode(field.type).name.value
+    )}[]\n`;
+  }
+
+  if (field.arguments && field.arguments.length) {
+    return `${field.name.value}: FieldQuery<${createArguments(
+      field.arguments
+    )}, ${createValueType(getNamedTypeNode(field.type).name.value)}>\n`;
+  }
+
+  return `${field.name.value}: ${createValueType(
+    getNamedTypeNode(field.type).name.value
+  )}\n`;
 }
 
 function createObjectFields(fields: readonly GQL.FieldDefinitionNode[]) {
