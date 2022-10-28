@@ -28,8 +28,10 @@ type ResolveQueryDefinition<T extends Record<string, unknown>> =
   | {
       [K in keyof T]?: T[K] extends ListQuery<infer A, infer B>
         ? [A, ResolveQueryDefinition<B>, ...never[]]
-        : T[K] extends FieldQuery<infer A, unknown>
-        ? [A, ...never[]]
+        : T[K] extends FieldQuery<infer A, infer B>
+        ? B extends Record<string, unknown>
+          ? [A, ResolveQueryDefinition<B>, ...never[]]
+          : [A, ...never[]]
         : T[K] extends Record<string, unknown>
         ? ResolveQueryDefinition<T[K]>
         : boolean;
