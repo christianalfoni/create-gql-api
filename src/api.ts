@@ -86,15 +86,22 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
   let string = "";
 
   if (alias) {
-    string += "  ".repeat(level) + alias + ": ";
+    string += ": " + alias;
   }
 
   if (Array.isArray(query) && query.length === 1) {
     const args = query[0] as Record<string, unknown>;
 
-    string += `(${Object.keys(args).reduce((aggr, key) => {
-      return aggr + `${key}: ${args[key]}`;
-    }, "")})\n`;
+    string += `(${Object.keys(args)
+      .reduce<string[]>((aggr, key) => {
+        const val = args[key];
+        return aggr.concat(
+          `${key}: ${
+            typeof val === "string" && val[0] !== "$" ? `"${val}"` : val
+          }`
+        );
+      }, [])
+      .join(", ")})\n`;
 
     string += "  ".repeat(level - 1) + "}\n";
 
@@ -105,19 +112,26 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
     const args = query[0] as Record<string, unknown>;
     const queryArg = query[1] as Record<string, unknown>;
 
-    string += `(${Object.keys(args).reduce((aggr, key) => {
-      return aggr + `${key}: ${args[key]}`;
-    }, "")}) {\n`;
+    string += ` (${Object.keys(args)
+      .reduce<string[]>((aggr, key) => {
+        const val = args[key];
+        return aggr.concat(
+          `${key}: ${
+            typeof val === "string" && val[0] !== "$" ? `"${val}"` : val
+          }`
+        );
+      }, [])
+      .join(", ")}) {\n`;
 
     for (const field in queryArg) {
-      const value = queryArg[field];
+      const value = (queryArg as QueryDefinition)[field];
       if (value === true) {
         string += "  ".repeat(level) + field + "\n";
       } else if (value) {
         string +=
           "  ".repeat(level) +
           field +
-          " " +
+          (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
           createQueryString(value as QueryDefinition, level + 1);
       }
     }
@@ -136,7 +150,7 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
       string +=
         "  ".repeat(level) +
         field +
-        " " +
+        (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
         createQueryString(value as QueryDefinition, level + 1);
     }
   }
@@ -177,9 +191,9 @@ export const createQueryApi =
         variables
           ? `(${Object.keys(variables)
               .map((key) => "$" + key.toUpperCase())
-              .join(", ")})`
-          : ""
-      } ${createQueryString(query)}`,
+              .join(", ")}) {\n`
+          : "{\n"
+      }${createQueryString(query)}`,
       variables
         ? Object.keys(variables).reduce<Record<string, unknown>>(
             (aggr, key) => {
