@@ -8,6 +8,7 @@ export const argumentsByField: Record<
     {
       isNonNull: boolean;
       type: string;
+      defaultValue?: string;
     }
   >
 > = {};
@@ -52,18 +53,18 @@ export function createInputValues(
       )
       .join("\n");
   } else {
-    const argumentsByFieldKey = name + "." + field;
-    argumentsByField[argumentsByFieldKey] = {};
+    argumentsByField[field] = {};
 
     for (const arg of args) {
+      argumentsByField[field][arg.name.value] = {
+        isNonNull: isNonNullType(arg.type),
+        type: getNamedTypeNode(arg.type).name.value,
+        // Implement default value
+      };
+
       string += `    ${arg.name.value}: ${createValueType(
         getNamedTypeNode(arg.type).name.value
       )}`;
-
-      argumentsByField[argumentsByFieldKey][arg.name.value] = {
-        isNonNull: isNonNullType(arg.type),
-        type: getNamedTypeNode(arg.type).name.value,
-      };
 
       if (arg !== args[args.length - 1]) {
         string += "\n";

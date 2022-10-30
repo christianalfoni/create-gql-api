@@ -5,35 +5,37 @@ type ListQuery<
   T extends Record<string, unknown>
 > = Array<T> & { __: A };
 
-type ListQueryDefinition = [
+type ListQueryDefinitions = [
   Record<string, unknown>,
-  QueryDefinition,
+  QueryDefinitions,
   ...never[]
 ];
 
-type FieldQueryDefinition = [Record<string, unknown>, ...never[]];
+type FieldQueryDefinitions = [Record<string, unknown>, ...never[]];
 
-type AliasQueryDefinition = { $ALIAS: string; $QUERY: ListQueryDefinition };
+type AliasQueryDefinitions = { $ALIAS: string; $QUERY: ListQueryDefinitions };
 
-type QueryDefinition = {
-  [key: string]:
-    | boolean
-    | ListQueryDefinition
-    | FieldQueryDefinition
-    | AliasQueryDefinition
-    | QueryDefinition;
+type QueryDefinition =
+  | boolean
+  | ListQueryDefinitions
+  | FieldQueryDefinitions
+  | AliasQueryDefinitions
+  | QueryDefinitions;
+
+type QueryDefinitions = {
+  [key: string]: QueryDefinition;
 };
 
-type ResolveQueryDefinition<T extends Record<string, unknown>> =
+type ResolveQueryDefinitions<T extends Record<string, unknown>> =
   | {
       [K in keyof T]?: T[K] extends ListQuery<infer A, infer B>
-        ? [A, ResolveQueryDefinition<B>, ...never[]]
+        ? [A, ResolveQueryDefinitions<B>, ...never[]]
         : T[K] extends FieldQuery<infer A, infer B>
         ? B extends Record<string, unknown>
-          ? [A, ResolveQueryDefinition<B>, ...never[]]
+          ? [A, ResolveQueryDefinitions<B>, ...never[]]
           : [A, ...never[]]
         : T[K] extends Record<string, unknown>
-        ? ResolveQueryDefinition<T[K]>
+        ? ResolveQueryDefinitions<T[K]>
         : boolean;
     } & {
       [key: string]:
@@ -41,23 +43,30 @@ type ResolveQueryDefinition<T extends Record<string, unknown>> =
             [K in keyof T]: T[K] extends ListQuery<infer A, infer B>
               ? {
                   $ALIAS: K;
-                  $QUERY: [A, ResolveQueryDefinition<B>, ...never[]];
+                  $QUERY: [A, ResolveQueryDefinitions<B>, ...never[]];
+                }
+              : T[K] extends FieldQuery<infer A, infer B>
+              ? {
+                  $ALIAS: K;
+                  $QUERY: B extends Record<string, unknown>
+                    ? [A, ResolveQueryDefinitions<B>, ...never[]]
+                    : [A, ...never[]];
                 }
               : never;
           }[keyof T]
-        | ListQueryDefinition
-        | FieldQueryDefinition
-        | ResolveQueryDefinition<{}>
+        | ListQueryDefinitions
+        | FieldQueryDefinitions
+        | ResolveQueryDefinitions<{}>
         | boolean;
     };
 
 type ResolveQuery<
-  T extends QueryDefinition,
+  T extends QueryDefinitions,
   U extends Record<string, unknown>
 > = {
-  [K in keyof T]: T[K] extends AliasQueryDefinition
+  [K in keyof T]: T[K] extends AliasQueryDefinitions
     ? T[K]["$ALIAS"] extends keyof U
-      ? T[K]["$QUERY"] extends ListQueryDefinition
+      ? T[K]["$QUERY"] extends ListQueryDefinitions
         ? U[T[K]["$ALIAS"]] extends ListQuery<any, infer Q>
           ? Array<ResolveQuery<T[K]["$QUERY"][1], Q>>
           : U[T[K]["$ALIAS"]] extends FieldQuery<any, infer Q>
@@ -66,13 +75,13 @@ type ResolveQuery<
         : never
       : never
     : K extends keyof U
-    ? T[K] extends ListQueryDefinition
+    ? T[K] extends ListQueryDefinitions
       ? U[K] extends ListQuery<any, infer Q>
         ? Array<ResolveQuery<T[K][1], Q>>
         : U[K] extends FieldQuery<any, infer Q>
         ? Q
         : never
-      : T[K] extends QueryDefinition
+      : T[K] extends QueryDefinitions
       ? U[K] extends Record<string, unknown>
         ? ResolveQuery<T[K], U[K]>
         : U[K]
@@ -80,83 +89,72 @@ type ResolveQuery<
     : never;
 };
 
+type DetectedVariableTypes = Record<
+  string,
+  { isNonNull: boolean; type: string }
+>;
+
+export function createQueryArgumentsString(
+  fieldKey: string,
+  args: Record<string, unknown>,
+  detectedVariableTypes: DetectedVariableTypes
+) {
+  return `(${Object.keys(args)
+    .reduce<string[]>((aggr, key) => {
+      const val = args[key];
+      const isVariable = typeof val === "string" && val[0] === "$";
+
+      if (isVariable) {
+        detectedVariableTypes[val] = argumentsByField[fieldKey][key];
+      }
+
+      return aggr.concat(`${key}: ${isVariable ? val : `"${val}"`}`);
+    }, [])
+    .join(", ")})`;
+}
+
+export function isAliasQueryDefinition(
+  queryDefinition: QueryDefinition
+): queryDefinition is AliasQueryDefinitions {
+  return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
+}
+
 export function createQueryBodyString(
-  queryDefinition: QueryDefinition,
+  QueryDefinitions: QueryDefinitions,
+  detectedVariableTypes: DetectedVariableTypes,
   level = 1
 ) {
-  let alias = "$ALIAS" in queryDefinition ? queryDefinition.$ALIAS : undefined;
-  let query =
-    "$ALIAS" in queryDefinition ? queryDefinition.$QUERY : queryDefinition;
+  let string = " {\n";
 
-  let string = "";
+  for (const field in QueryDefinitions) {
+    const value = QueryDefinitions[field];
 
-  if (alias) {
-    string += ": " + alias;
-  }
-
-  if (Array.isArray(query) && query.length === 1) {
-    const args = query[0] as Record<string, unknown>;
-
-    string += `(${Object.keys(args)
-      .reduce<string[]>((aggr, key) => {
-        const val = args[key];
-        return aggr.concat(
-          `${key}: ${
-            typeof val === "string" && val[0] !== "$" ? `"${val}"` : val
-          }`
-        );
-      }, [])
-      .join(", ")})\n`;
-
-    string += "  ".repeat(level - 1) + "}\n";
-
-    return string;
-  }
-
-  if (Array.isArray(query) && query.length === 2) {
-    const args = query[0] as Record<string, unknown>;
-    const queryArg = query[1] as Record<string, unknown>;
-
-    string += ` (${Object.keys(args)
-      .reduce<string[]>((aggr, key) => {
-        const val = args[key];
-        return aggr.concat(
-          `${key}: ${
-            typeof val === "string" && val[0] !== "$" ? `"${val}"` : val
-          }`
-        );
-      }, [])
-      .join(", ")}) {\n`;
-
-    for (const field in queryArg) {
-      const value = (queryArg as QueryDefinition)[field];
-      if (value === true) {
-        string += "  ".repeat(level) + field + "\n";
-      } else if (value) {
-        string +=
-          "  ".repeat(level) +
-          field +
-          (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
-          createQueryBodyString(value as QueryDefinition, level + 1);
-      }
+    if (value === false) {
+      continue;
     }
 
-    string += "  ".repeat(level - 1) + "}\n";
-
-    return string;
-  }
-
-  for (const field in query as QueryDefinition) {
-    const value = (query as QueryDefinition)[field];
+    string += "  ".repeat(level) + field;
 
     if (value === true) {
-      string += "  ".repeat(level) + field + "\n";
-    } else if (value) {
+      string += "\n";
+    } else if (Array.isArray(value) && value.length === 1) {
       string +=
-        "  ".repeat(level) +
-        field +
-        (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
-        createQueryBodyString(value as QueryDefinition, level + 1);
+        createQueryArgumentsString(field, value[0], detectedVariableTypes) +
+        "\n";
+    } else if (Array.isArray(value) && value.length === 2) {
+      string +=
+        createQueryArgumentsString(field, value[0], detectedVariableTypes) +
+        createQueryBodyString(value[1], detectedVariableTypes, level + 1);
+    } else if (isAliasQueryDefinition(value)) {
+      string += `: ${value.$ALIAS}${createQueryArgumentsString(
+        value.$ALIAS,
+        value.$QUERY[0],
+        detectedVariableTypes
+      )}${createQueryBodyString(
+        value.$QUERY[1],
+        detectedVariableTypes,
+        level + 1
+      )}`;
     }
   }
 
@@ -165,36 +163,40 @@ export function createQueryBodyString(
   return string;
 }
 
-function getGqlType(key: string, value: unknown) {
-  if (typeof value === "boolean") {
-    return "Boolean";
-  }
-
-  if (typeof value === "number") {
-    return value % 1 != 0 ? "Int" : "Float";
-  }
-
-  if (typeof value === "string") {
-    return "String";
-  }
-
-  throw new Error("Invalid variable type");
-}
-
-function createVariablesString(variables: Record<string, unknown>) {
+function createVariablesString(
+  variables: Record<string, unknown>,
+  detectedVariableTypes: Record<string, { isNonNull: boolean; type: string }>
+) {
   return Object.keys(variables)
-    .map((key) => `$${key}: ${getGqlType(key, variables[key])}`)
+    .map((key) => {
+      let varKey = `$${key}`;
+      let gqlType = detectedVariableTypes[varKey];
+
+      if (!gqlType) {
+        throw new Error(`Unable to detect variable type for key ${key}`);
+      }
+
+      return `${varKey}: ${gqlType.type}${gqlType.isNonNull ? "!" : ""}`;
+    })
     .join(", ");
 }
 
 function createQueryString(
   name: string,
-  query: QueryDefinition,
+  query: QueryDefinitions,
   variables?: Record<string, unknown>
 ) {
+  const detectedVariableTypes: Record<
+    string,
+    { isNonNull: boolean; type: string }
+  > = {};
+  const queryBodyString = createQueryBodyString(query, detectedVariableTypes);
+
   return `query ${name} ${
-    variables ? `(${createVariablesString(variables)}) {\n` : "{\n"
-  }${createQueryBodyString(query)}`;
+    variables
+      ? `(${createVariablesString(variables, detectedVariableTypes)})`
+      : ""
+  }${queryBodyString}`;
 }
 
 export const createApi = (
@@ -206,7 +208,7 @@ export const createApi = (
   query:
     <
       V extends Record<string, unknown> | void,
-      T extends ResolveQueryDefinition<RootQueryType>
+      T extends ResolveQueryDefinitions<RootQueryType>
     >(
       name: string,
       cb: T | ((variables: V) => T)

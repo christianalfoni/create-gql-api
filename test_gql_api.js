@@ -12450,75 +12450,300 @@ var {
 var axios_default2 = axios_default;
 
 // gql_api.ts
-function createQueryBodyString(queryDefinition, level = 1) {
-  let alias = "$ALIAS" in queryDefinition ? queryDefinition.$ALIAS : void 0;
-  let query = "$ALIAS" in queryDefinition ? queryDefinition.$QUERY : queryDefinition;
-  let string = "";
-  if (alias) {
-    string += ": " + alias;
-  }
-  if (Array.isArray(query) && query.length === 1) {
-    const args = query[0];
-    string += `(${Object.keys(args).reduce((aggr, key) => {
-      const val = args[key];
-      return aggr.concat(
-        `${key}: ${typeof val === "string" && val[0] !== "$" ? `"${val}"` : val}`
-      );
-    }, []).join(", ")})
-`;
-    string += "  ".repeat(level - 1) + "}\n";
-    return string;
-  }
-  if (Array.isArray(query) && query.length === 2) {
-    const args = query[0];
-    const queryArg = query[1];
-    string += ` (${Object.keys(args).reduce((aggr, key) => {
-      const val = args[key];
-      return aggr.concat(
-        `${key}: ${typeof val === "string" && val[0] !== "$" ? `"${val}"` : val}`
-      );
-    }, []).join(", ")}) {
-`;
-    for (const field in queryArg) {
-      const value = queryArg[field];
-      if (value === true) {
-        string += "  ".repeat(level) + field + "\n";
-      } else if (value) {
-        string += "  ".repeat(level) + field + (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") + createQueryBodyString(value, level + 1);
-      }
+var argumentsByField = {
+  "collection": {
+    "path": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "ID"
     }
-    string += "  ".repeat(level - 1) + "}\n";
-    return string;
+  },
+  "collections": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "ID"
+    }
+  },
+  "githubRepos": {
+    "page": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "perPage": {
+      "isNonNull": false,
+      "type": "Int"
+    }
+  },
+  "notifications": {
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    },
+    "type": {
+      "isNonNull": false,
+      "type": "String"
+    }
+  },
+  "recentBranches": {
+    "contribution": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "recentProjects": {
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    }
+  },
+  "recentlyAccessedSandboxes": {
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "recentlyUsedTemplates": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "sandboxes": {
+    "alwaysOn": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "authorId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    },
+    "hasOriginalGit": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    },
+    "showDeleted": {
+      "isNonNull": false,
+      "type": "Boolean"
+    }
+  },
+  "team": {
+    "id": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "templates": {
+    "showAll": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "baseGitSandboxes": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "originalGitSandboxes": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "album": {
+    "albumId": {
+      "isNonNull": true,
+      "type": "ID"
+    }
+  },
+  "albums": {
+    "username": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "git": {
+    "branch": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "path": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "repo": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "username": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "githubOrganizationRepos": {
+    "organization": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "page": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "perPage": {
+      "isNonNull": false,
+      "type": "Int"
+    }
+  },
+  "githubRepo": {
+    "owner": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "repo": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "project": {
+    "gitProvider": {
+      "isNonNull": false,
+      "type": "GitProvider"
+    },
+    "owner": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "repo": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "sandbox": {
+    "sandboxId": {
+      "isNonNull": true,
+      "type": "ID"
+    }
+  },
+  "teamByToken": {
+    "inviteToken": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "comment": {
+    "commentId": {
+      "isNonNull": true,
+      "type": "UUID4"
+    }
+  },
+  "drafts": {
+    "authorId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    }
+  },
+  "projects": {
+    "syncData": {
+      "isNonNull": false,
+      "type": "Boolean"
+    }
   }
-  for (const field in query) {
-    const value = query[field];
+};
+function createQueryArgumentsString(fieldKey, args, detectedVariableTypes) {
+  return `(${Object.keys(args).reduce((aggr, key) => {
+    const val = args[key];
+    const isVariable = typeof val === "string" && val[0] === "$";
+    if (isVariable) {
+      detectedVariableTypes[val] = argumentsByField[fieldKey][key];
+    }
+    return aggr.concat(`${key}: ${isVariable ? val : `"${val}"`}`);
+  }, []).join(", ")})`;
+}
+function isAliasQueryDefinition(queryDefinition) {
+  return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
+}
+function createQueryBodyString(QueryDefinitions, detectedVariableTypes, level = 1) {
+  let string = " {\n";
+  for (const field in QueryDefinitions) {
+    const value = QueryDefinitions[field];
+    if (value === false) {
+      continue;
+    }
+    string += "  ".repeat(level) + field;
     if (value === true) {
-      string += "  ".repeat(level) + field + "\n";
-    } else if (value) {
-      string += "  ".repeat(level) + field + (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") + createQueryBodyString(value, level + 1);
+      string += "\n";
+    } else if (Array.isArray(value) && value.length === 1) {
+      string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + "\n";
+    } else if (Array.isArray(value) && value.length === 2) {
+      string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + createQueryBodyString(value[1], detectedVariableTypes, level + 1);
+    } else if (isAliasQueryDefinition(value)) {
+      string += `: ${value.$ALIAS}${createQueryArgumentsString(
+        value.$ALIAS,
+        value.$QUERY[0],
+        detectedVariableTypes
+      )}${createQueryBodyString(
+        value.$QUERY[1],
+        detectedVariableTypes,
+        level + 1
+      )}`;
     }
   }
   string += "  ".repeat(level - 1) + "}\n";
   return string;
 }
-function getGqlType(key, value) {
-  if (typeof value === "boolean") {
-    return "Boolean";
-  }
-  if (typeof value === "number") {
-    return value % 1 != 0 ? "Int" : "Float";
-  }
-  if (typeof value === "string") {
-    return "String";
-  }
-  throw new Error("Invalid variable type");
-}
-function createVariablesString(variables) {
-  return Object.keys(variables).map((key) => `$${key}: ${getGqlType(key, variables[key])}`).join(", ");
+function createVariablesString(variables, detectedVariableTypes) {
+  return Object.keys(variables).map((key) => {
+    let varKey = `$${key}`;
+    let gqlType = detectedVariableTypes[varKey];
+    if (!gqlType) {
+      throw new Error(`Unable to detect variable type for key ${key}`);
+    }
+    return `${varKey}: ${gqlType.type}${gqlType.isNonNull ? "!" : ""}`;
+  }).join(", ");
 }
 function createQueryString(name, query, variables) {
-  return `query ${name} ${variables ? `(${createVariablesString(variables)}) {
-` : "{\n"}${createQueryBodyString(query)}`;
+  const detectedVariableTypes = {};
+  const queryBodyString = createQueryBodyString(query, detectedVariableTypes);
+  return `query ${name} ${variables ? `(${createVariablesString(variables, detectedVariableTypes)})` : ""}${queryBodyString}`;
 }
 var createApi = (request) => ({
   query: (name, cb) => (variables) => {
@@ -12547,6 +12772,7 @@ var createApi = (request) => ({
 // test_gql_api.ts
 var api = createApi((query, variables) => {
   console.log(query, variables);
+  return Promise.resolve();
   return axios_default2.post(
     "https://codesandbox.stream/api/graphql",
     {
@@ -12560,18 +12786,27 @@ var api = createApi((query, variables) => {
     }
   ).then(({ data }) => data);
 });
-var meQuery = api.query("Me", ({ albumId }) => ({
-  album: [
+var meQuery = api.query("Me", ({ gitProvider, owner, repo }) => ({
+  project: [
+    { gitProvider, owner, repo },
     {
-      albumId
-    },
-    {
-      id: true
+      owner: true
     }
-  ]
+  ],
+  project2: {
+    $ALIAS: "project",
+    $QUERY: [
+      { gitProvider, owner, repo },
+      {
+        appInstalled: true
+      }
+    ]
+  }
 }));
 meQuery({
-  albumId: "123"
+  gitProvider: "GITHUB" /* GITHUB */,
+  owner: "codesandbox",
+  repo: "test-sandbox"
 }).then(console.log);
 /*!
  * mime-db

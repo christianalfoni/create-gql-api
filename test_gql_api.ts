@@ -3,7 +3,7 @@ import { createApi, GitProvider } from "./gql_api";
 
 const api = createApi((query, variables) => {
   console.log(query, variables);
-
+  return Promise.resolve();
   return axios
     .post(
       "https://codesandbox.stream/api/graphql",
@@ -21,20 +21,31 @@ const api = createApi((query, variables) => {
 });
 
 type Props = {
-  albumId: string;
+  gitProvider: GitProvider;
+  owner: string;
+  repo: string;
 };
 
-const meQuery = api.query("Me", ({ albumId }: Props) => ({
-  album: [
+const meQuery = api.query("Me", ({ gitProvider, owner, repo }: Props) => ({
+  project: [
+    { gitProvider, owner, repo },
     {
-      albumId,
-    },
-    {
-      id: true,
+      owner: true,
     },
   ],
+  project2: {
+    $ALIAS: "project",
+    $QUERY: [
+      { gitProvider, owner, repo },
+      {
+        appInstalled: true,
+      },
+    ],
+  },
 }));
 
 meQuery({
-  albumId: "123",
+  gitProvider: GitProvider.GITHUB,
+  owner: "codesandbox",
+  repo: "test-sandbox",
 }).then(console.log);
