@@ -1017,6 +1017,262 @@ export type WorkspaceSandboxSettings = {
   preventSandboxLeaving: boolean
 }
 
+const argumentsByField = {
+  "CurrentUser.collection": {
+    "path": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "ID"
+    }
+  },
+  "CurrentUser.collections": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "ID"
+    }
+  },
+  "CurrentUser.githubRepos": {
+    "page": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "perPage": {
+      "isNonNull": false,
+      "type": "Int"
+    }
+  },
+  "CurrentUser.notifications": {
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    },
+    "type": {
+      "isNonNull": false,
+      "type": "String"
+    }
+  },
+  "CurrentUser.recentBranches": {
+    "contribution": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "CurrentUser.recentProjects": {
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    }
+  },
+  "CurrentUser.recentlyAccessedSandboxes": {
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "CurrentUser.recentlyUsedTemplates": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "CurrentUser.sandboxes": {
+    "hasOriginalGit": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    },
+    "showDeleted": {
+      "isNonNull": false,
+      "type": "Boolean"
+    }
+  },
+  "CurrentUser.team": {
+    "id": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "CurrentUser.templates": {
+    "showAll": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "Git.baseGitSandboxes": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "Git.originalGitSandboxes": {
+    "teamId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    }
+  },
+  "RootQueryType.album": {
+    "albumId": {
+      "isNonNull": true,
+      "type": "ID"
+    }
+  },
+  "RootQueryType.albums": {
+    "username": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "RootQueryType.git": {
+    "branch": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "path": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "repo": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "username": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "RootQueryType.githubOrganizationRepos": {
+    "organization": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "page": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "perPage": {
+      "isNonNull": false,
+      "type": "Int"
+    }
+  },
+  "RootQueryType.githubRepo": {
+    "owner": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "repo": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "RootQueryType.project": {
+    "gitProvider": {
+      "isNonNull": false,
+      "type": "GitProvider"
+    },
+    "owner": {
+      "isNonNull": true,
+      "type": "String"
+    },
+    "repo": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "RootQueryType.sandbox": {
+    "sandboxId": {
+      "isNonNull": true,
+      "type": "ID"
+    }
+  },
+  "RootQueryType.teamByToken": {
+    "inviteToken": {
+      "isNonNull": true,
+      "type": "String"
+    }
+  },
+  "Sandbox.comment": {
+    "commentId": {
+      "isNonNull": true,
+      "type": "UUID4"
+    }
+  },
+  "Team.drafts": {
+    "authorId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    }
+  },
+  "Team.projects": {
+    "syncData": {
+      "isNonNull": false,
+      "type": "Boolean"
+    }
+  },
+  "Team.sandboxes": {
+    "alwaysOn": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "authorId": {
+      "isNonNull": false,
+      "type": "UUID4"
+    },
+    "hasOriginalGit": {
+      "isNonNull": false,
+      "type": "Boolean"
+    },
+    "limit": {
+      "isNonNull": false,
+      "type": "Int"
+    },
+    "orderBy": {
+      "isNonNull": false,
+      "type": "OrderBy"
+    },
+    "showDeleted": {
+      "isNonNull": false,
+      "type": "Boolean"
+    }
+  }
+};
 type FieldQuery<A extends Record<string, unknown>, T> = T & { __: A };
 
 type ListQuery<
@@ -1099,7 +1355,10 @@ type ResolveQuery<
     : never;
 };
 
-function createQueryString(queryDefinition: QueryDefinition, level = 1) {
+export function createQueryBodyString(
+  queryDefinition: QueryDefinition,
+  level = 1
+) {
   let alias = "$ALIAS" in queryDefinition ? queryDefinition.$ALIAS : undefined;
   let query =
     "$ALIAS" in queryDefinition ? queryDefinition.$QUERY : queryDefinition;
@@ -1153,7 +1412,7 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
           "  ".repeat(level) +
           field +
           (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
-          createQueryString(value as QueryDefinition, level + 1);
+          createQueryBodyString(value as QueryDefinition, level + 1);
       }
     }
 
@@ -1172,7 +1431,7 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
         "  ".repeat(level) +
         field +
         (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
-        createQueryString(value as QueryDefinition, level + 1);
+        createQueryBodyString(value as QueryDefinition, level + 1);
     }
   }
 
@@ -1181,49 +1440,79 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
   return string;
 }
 
-export const createQueryApi =
-  (
-    request: (
-      query: string,
-      variables: Record<string, unknown>
-    ) => Promise<unknown>
-  ) =>
-  <
-    V extends Record<string, unknown> | void,
-    T extends ResolveQueryDefinition<RootQueryType>
-  >(
-    name: string,
-    cb: (variables: V) => T
-  ) =>
-  (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
-    const query = cb(
-      Object.keys(variables || {}).reduce<Record<string, string>>(
-        (aggr, key) => {
-          aggr[key] = "$" + key.toUpperCase();
+function getGqlType(key: string, value: unknown) {
+  if (typeof value === "boolean") {
+    return "Boolean";
+  }
 
-          return aggr;
-        },
-        {}
-      ) as V
-    );
+  if (typeof value === "number") {
+    return value % 1 != 0 ? "Int" : "Float";
+  }
 
-    return request(
-      `query ${name} ${
+  if (typeof value === "string") {
+    return "String";
+  }
+
+  throw new Error("Invalid variable type");
+}
+
+function createVariablesString(variables: Record<string, unknown>) {
+  return Object.keys(variables)
+    .map((key) => `$${key}: ${getGqlType(key, variables[key])}`)
+    .join(", ");
+}
+
+function createQueryString(
+  name: string,
+  query: QueryDefinition,
+  variables?: Record<string, unknown>
+) {
+  return `query ${name} ${
+    variables ? `(${createVariablesString(variables)}) {\n` : "{\n"
+  }${createQueryBodyString(query)}`;
+}
+
+export const createApi = (
+  request: (
+    query: string,
+    variables: Record<string, unknown>
+  ) => Promise<unknown>
+) => ({
+  query:
+    <
+      V extends Record<string, unknown> | void,
+      T extends ResolveQueryDefinition<RootQueryType>
+    >(
+      name: string,
+      cb: T | ((variables: V) => T)
+    ) =>
+    (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
+      const query =
+        typeof cb === "function"
+          ? cb(
+              Object.keys(variables || {}).reduce<Record<string, string>>(
+                (aggr, key) => {
+                  aggr[key] = "$" + key;
+
+                  return aggr;
+                },
+                {}
+              ) as V
+            )
+          : cb;
+
+      return request(
+        createQueryString(name, query, variables ? variables : undefined),
         variables
-          ? `(${Object.keys(variables)
-              .map((key) => "$" + key.toUpperCase())
-              .join(", ")}) {\n`
-          : "{\n"
-      }${createQueryString(query)}`,
-      variables
-        ? Object.keys(variables).reduce<Record<string, unknown>>(
-            (aggr, key) => {
-              aggr["$" + key.toUpperCase()] = variables[key];
+          ? Object.keys(variables).reduce<Record<string, unknown>>(
+              (aggr, key) => {
+                aggr[key] = variables[key];
 
-              return aggr;
-            },
-            {}
-          )
-        : {}
-    ) as Promise<ResolveQuery<T, RootQueryType>>;
-  };
+                return aggr;
+              },
+              {}
+            )
+          : {}
+      ) as Promise<ResolveQuery<T, RootQueryType>>;
+    },
+});

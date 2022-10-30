@@ -1,5 +1,16 @@
 import * as GQL from "graphql";
-import { getNamedTypeNode, isListTypeNode } from "./schemaUtils";
+import { getNamedTypeNode, isListTypeNode, isNonNullType } from "./schemaUtils";
+
+export const argumentsByField: Record<
+  string,
+  Record<
+    string,
+    {
+      isNonNull: boolean;
+      type: string;
+    }
+  >
+> = {};
 
 export function createValueType(value: string) {
   if (
@@ -25,27 +36,54 @@ export function createValueType(value: string) {
 }
 
 export function createInputValues(
+  name: string,
+  field: string,
   args: readonly GQL.InputValueDefinitionNode[]
 ) {
   let string = "{\n";
 
-  string += args
-    .map(
-      (arg) =>
-        `    ${arg.name.value}: ${createValueType(
-          getNamedTypeNode(arg.type).name.value
-        )}`
-    )
-    .join("\n");
+  if (name === "RootMutationType" || name === "RootSubscriptionType") {
+    string += args
+      .map(
+        (arg) =>
+          `    ${arg.name.value}: ${createValueType(
+            getNamedTypeNode(arg.type).name.value
+          )}`
+      )
+      .join("\n");
+  } else {
+    const argumentsByFieldKey = name + "." + field;
+    argumentsByField[argumentsByFieldKey] = {};
+
+    for (const arg of args) {
+      string += `    ${arg.name.value}: ${createValueType(
+        getNamedTypeNode(arg.type).name.value
+      )}`;
+
+      argumentsByField[argumentsByFieldKey][arg.name.value] = {
+        isNonNull: isNonNullType(arg.type),
+        type: getNamedTypeNode(arg.type).name.value,
+      };
+
+      if (arg !== args[args.length - 1]) {
+        string += "\n";
+      }
+    }
+  }
 
   return string + "\n  }";
 }
 
-export function createObjectTypeKey(field: GQL.FieldDefinitionNode) {
+export function createObjectTypeKey(
+  name: string,
+  field: GQL.FieldDefinitionNode
+) {
   const isList = isListTypeNode(field.type);
 
   if (isList && field.arguments && field.arguments.length) {
     return `${field.name.value}: ListQuery<${createInputValues(
+      name,
+      field.name.value,
       field.arguments
     )}, ${createValueType(getNamedTypeNode(field.type).name.value)}>`;
   }
@@ -58,6 +96,8 @@ export function createObjectTypeKey(field: GQL.FieldDefinitionNode) {
 
   if (field.arguments && field.arguments.length) {
     return `${field.name.value}: FieldQuery<${createInputValues(
+      name,
+      field.name.value,
       field.arguments
     )}, ${createValueType(getNamedTypeNode(field.type).name.value)}>`;
   }
@@ -75,7 +115,7 @@ export function createObjectType(definition: GQL.ObjectTypeDefinitionNode) {
   let string = `export type ${definition.name.value} = {\n`;
 
   string += definition.fields
-    .map((field) => `  ${createObjectTypeKey(field)}`)
+    .map((field) => `  ${createObjectTypeKey(definition.name.value, field)}`)
     .join("\n");
 
   return string + "\n}\n";
@@ -129,7 +169,13 @@ export type ${definition.name.value} = ${
 export function createTypes(definitions: GQL.DocumentNode["definitions"]) {
   let types = "";
 
+  const scalarTypeDefinitions: GQL.ScalarTypeDefinitionNode[] = [];
+
   for (const definition of definitions) {
+    if (definition.kind === GQL.Kind.SCALAR_TYPE_DEFINITION) {
+      scalarTypeDefinitions.push(definition);
+      continue;
+    }
     if (definition.kind === GQL.Kind.OBJECT_TYPE_DEFINITION) {
       types += createObjectType(definition);
       continue;

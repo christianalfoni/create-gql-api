@@ -80,7 +80,10 @@ type ResolveQuery<
     : never;
 };
 
-function createQueryString(queryDefinition: QueryDefinition, level = 1) {
+export function createQueryBodyString(
+  queryDefinition: QueryDefinition,
+  level = 1
+) {
   let alias = "$ALIAS" in queryDefinition ? queryDefinition.$ALIAS : undefined;
   let query =
     "$ALIAS" in queryDefinition ? queryDefinition.$QUERY : queryDefinition;
@@ -134,7 +137,7 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
           "  ".repeat(level) +
           field +
           (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
-          createQueryString(value as QueryDefinition, level + 1);
+          createQueryBodyString(value as QueryDefinition, level + 1);
       }
     }
 
@@ -153,7 +156,7 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
         "  ".repeat(level) +
         field +
         (Array.isArray(value) || "$ALIAS" in value ? "" : " {\n") +
-        createQueryString(value as QueryDefinition, level + 1);
+        createQueryBodyString(value as QueryDefinition, level + 1);
     }
   }
 
@@ -162,49 +165,79 @@ function createQueryString(queryDefinition: QueryDefinition, level = 1) {
   return string;
 }
 
-export const createQueryApi =
-  (
-    request: (
-      query: string,
-      variables: Record<string, unknown>
-    ) => Promise<unknown>
-  ) =>
-  <
-    V extends Record<string, unknown> | void,
-    T extends ResolveQueryDefinition<RootQueryType>
-  >(
-    name: string,
-    cb: (variables: V) => T
-  ) =>
-  (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
-    const query = cb(
-      Object.keys(variables || {}).reduce<Record<string, string>>(
-        (aggr, key) => {
-          aggr[key] = "$" + key.toUpperCase();
+function getGqlType(key: string, value: unknown) {
+  if (typeof value === "boolean") {
+    return "Boolean";
+  }
 
-          return aggr;
-        },
-        {}
-      ) as V
-    );
+  if (typeof value === "number") {
+    return value % 1 != 0 ? "Int" : "Float";
+  }
 
-    return request(
-      `query ${name} ${
+  if (typeof value === "string") {
+    return "String";
+  }
+
+  throw new Error("Invalid variable type");
+}
+
+function createVariablesString(variables: Record<string, unknown>) {
+  return Object.keys(variables)
+    .map((key) => `$${key}: ${getGqlType(key, variables[key])}`)
+    .join(", ");
+}
+
+function createQueryString(
+  name: string,
+  query: QueryDefinition,
+  variables?: Record<string, unknown>
+) {
+  return `query ${name} ${
+    variables ? `(${createVariablesString(variables)}) {\n` : "{\n"
+  }${createQueryBodyString(query)}`;
+}
+
+export const createApi = (
+  request: (
+    query: string,
+    variables: Record<string, unknown>
+  ) => Promise<unknown>
+) => ({
+  query:
+    <
+      V extends Record<string, unknown> | void,
+      T extends ResolveQueryDefinition<RootQueryType>
+    >(
+      name: string,
+      cb: T | ((variables: V) => T)
+    ) =>
+    (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
+      const query =
+        typeof cb === "function"
+          ? cb(
+              Object.keys(variables || {}).reduce<Record<string, string>>(
+                (aggr, key) => {
+                  aggr[key] = "$" + key;
+
+                  return aggr;
+                },
+                {}
+              ) as V
+            )
+          : cb;
+
+      return request(
+        createQueryString(name, query, variables ? variables : undefined),
         variables
-          ? `(${Object.keys(variables)
-              .map((key) => "$" + key.toUpperCase())
-              .join(", ")}) {\n`
-          : "{\n"
-      }${createQueryString(query)}`,
-      variables
-        ? Object.keys(variables).reduce<Record<string, unknown>>(
-            (aggr, key) => {
-              aggr["$" + key.toUpperCase()] = variables[key];
+          ? Object.keys(variables).reduce<Record<string, unknown>>(
+              (aggr, key) => {
+                aggr[key] = variables[key];
 
-              return aggr;
-            },
-            {}
-          )
-        : {}
-    ) as Promise<ResolveQuery<T, RootQueryType>>;
-  };
+                return aggr;
+              },
+              {}
+            )
+          : {}
+      ) as Promise<ResolveQuery<T, RootQueryType>>;
+    },
+});

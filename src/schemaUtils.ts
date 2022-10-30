@@ -19,3 +19,15 @@ export function isListTypeNode(type: GQL.TypeNode): boolean {
 
   return isListTypeNode(type.type);
 }
+
+export function isNonNullType(type: GQL.TypeNode): boolean {
+  if (type.kind === GQL.Kind.NAMED_TYPE) {
+    return false;
+  }
+
+  if (type.kind === GQL.Kind.NON_NULL_TYPE) {
+    return true;
+  }
+
+  return isListTypeNode(type.type);
+}
