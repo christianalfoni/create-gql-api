@@ -1,18 +1,19 @@
 {
   "name": "create-gql-api",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Simplify GQL typing and consumption",
   "main": "index.js",
   "bin": "bin/index.js",
   "dependencies": {
     "get-graphql-schema": "^2.1.2",
-    "graphql": "^16.6.0"
+    "graphql": "^16.6.0",
+    "ts-jest": "^29.0.3"
   },
   "files": [
     "bin"
   ],
   "scripts": {
-    "dev": "yarn build && ./bin/index.js https://codesandbox.stream/api/graphql",
+    "dev": "yarn build && ./bin/index.js https://codesandbox.stream/api/graphql gql_api.ts",
     "build": "esbuild src/index.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=bin/index.js && cp src/api.ts bin/api.ts",
     "test_gql": "yarn dev && esbuild test_gql_api.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=test_gql_api.js && node test_gql_api.js"
   },
@@ -28,7 +29,9 @@
   },
   "homepage": "https://github.com/christianalfoni/create-gql-api#readme",
   "devDependencies": {
+    "@types/jest": "^29.2.0",
     "@types/node": "^18.11.3",
+    "axios": "^1.1.3",
     "esbuild": "^0.15.12"
   }
 }
