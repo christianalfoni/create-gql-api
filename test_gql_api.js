@@ -12772,7 +12772,6 @@ var createApi = (request) => ({
 // test_gql_api.ts
 var api = createApi((query, variables) => {
   console.log(query, variables);
-  return Promise.resolve();
   return axios_default2.post(
     "https://codesandbox.stream/api/graphql",
     {
