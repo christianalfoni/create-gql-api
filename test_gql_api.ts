@@ -20,7 +20,7 @@ const api = createApi((query, variables) => {
     .then(({ data }) => data);
 });
 
-api.query("SomeQuery", {
+api.createQuery("SomeQuery", {
   me: {
     email: true,
   },

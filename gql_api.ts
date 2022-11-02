@@ -1469,21 +1469,21 @@ export function createApi(
     onMessage: (message: unknown) => void
   ) => () => void
 ): {
-  query: <
+  createQuery: <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootQueryType>
   >(
     name: string,
     cb: T | ((variables: V) => T)
   ) => (variables: V) => Promise<ResolveQuery<T, RootQueryType>>;
-  mutation: <
+  createMutation: <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootMutationType>
   >(
     name: string,
     cb: T | ((variables: V) => T)
   ) => (variables: V) => Promise<ResolveQuery<T, RootMutationType>>;
-  subscribe: <
+  createSubscription: <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootSubscriptionType>
   >(
@@ -1497,14 +1497,14 @@ export function createApi(
     variables: Record<string, unknown>
   ) => Promise<unknown>
 ): {
-  query: <
+  createQuery: <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootQueryType>
   >(
     name: string,
     cb: T | ((variables: V) => T)
   ) => (variables: V) => Promise<ResolveQuery<T, RootQueryType>>;
-  mutation: <
+  createMutation: <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootMutationType>
   >(
@@ -1528,7 +1528,7 @@ export function createApi(
   const createSubscriptionString = createQueryStringFactory("subscription");
 
   return {
-    mutation:
+    createMutation:
       <
         V extends Record<string, unknown> | void,
         T extends ResolveQueryDefinitions<RootMutationType>
@@ -1565,7 +1565,7 @@ export function createApi(
             : {}
         ) as Promise<ResolveQuery<T, RootMutationType>>;
       },
-    query:
+    createQuery:
       <
         V extends Record<string, unknown> | void,
         T extends ResolveQueryDefinitions<RootQueryType>
@@ -1602,7 +1602,7 @@ export function createApi(
             : {}
         ) as Promise<ResolveQuery<T, RootQueryType>>;
       },
-    subscription: subscribe
+    createSubscription: subscribe
       ? <
             V extends Record<string, unknown> | void,
             T extends ResolveQueryDefinitions<RootSubscriptionType>
