@@ -17,21 +17,7 @@ const api = createApi(
         // Implement the GraphQL POST request with the
         // query, variables and any authentication you use
         // for your app
-        return fetch('https://example.domain/graphql', {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ query, variables })
-        })
-            .then((response) => response.json())
-            .then(({ data, errors }) => {
-                if (errors) {
-                    throw errors
-                }
-            
-                return data
-            })
+        return new Promise(() => {})
     },
     (query, variables, onMessage) => {
         // Optionally implement subscription handling
@@ -42,17 +28,47 @@ const api = createApi(
 )
 
 // Create a query by giving it a name and what fields to include
-export const queryCurrentUser = api.query("CurrentUser", {
-    me: {
+export const queryFoo = api.createQuery("Foo", {
+    foo: {
         name: true,
         email: true
     }
 })
+queryFoo()
 
-// Query on single fields
-export const queryAlbum = api.query("CurrentUser", {
-    album: [{ albumId: '123' }, {
-        title: true
+// Query on simple values
+export const queryBar = api.createQuery("Bar", {
+    bar: [{ unit: 'FOOTER' }]
+})
+queryBar()
+
+// Query on object and lists
+export const queryBaz = api.createQuery("Baz", {
+    baz: [{ id: '123' }, {
+        id: true
     }]
 })
+queryBaz()
+
+// Query with variables
+export const queryBazWithVars = api.createQuery("BazWithVars", (vars: { id: string }) => ({
+    baz: [{ id: vars.id }, {
+        id: true
+    }]
+}))
+queryBazWithVars({ id: '123' })
+
+// Mutations works like queries
+export const mutateSomething = api.createMutation("Something", () => ({
+    something: [{}]
+}))
+mutateSomething()
+
+// Subscriptions 
+export const subscribeSomething = api.createSubscription("Something", (vars: { id: string }) => ({
+    something: [{ id: vars.id }]
+}))
+subscribeSomething((data) => {
+    // Handle the data
+}, { id: '123' }) // Returns disposer
 ```
