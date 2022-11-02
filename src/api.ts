@@ -1,3 +1,5 @@
+// This file is read and written using FS. The Query types will be available in the merged
+// generated file
 type FieldQuery<A extends Record<string, unknown>, T> = T & { __: A };
 
 type ListQuery<
@@ -5,21 +7,21 @@ type ListQuery<
   T extends Record<string, unknown>
 > = Array<T> & { __: A };
 
-type ListQueryDefinitions = [
+type ListQueryDefinition = [
   Record<string, unknown>,
   QueryDefinitions,
   ...never[]
 ];
 
-type FieldQueryDefinitions = [Record<string, unknown>, ...never[]];
+type FieldQueryDefinition = [Record<string, unknown>, ...never[]];
 
-type AliasQueryDefinitions = { $ALIAS: string; $QUERY: ListQueryDefinitions };
+type AliasQueryDefinition = { $ALIAS: string; $QUERY: ListQueryDefinition };
 
 type QueryDefinition =
   | boolean
-  | ListQueryDefinitions
-  | FieldQueryDefinitions
-  | AliasQueryDefinitions
+  | ListQueryDefinition
+  | FieldQueryDefinition
+  | AliasQueryDefinition
   | QueryDefinitions;
 
 type QueryDefinitions = {
@@ -54,8 +56,8 @@ type ResolveQueryDefinitions<T extends Record<string, unknown>> =
                 }
               : never;
           }[keyof T]
-        | ListQueryDefinitions
-        | FieldQueryDefinitions
+        | ListQueryDefinition
+        | FieldQueryDefinition
         | ResolveQueryDefinitions<{}>
         | boolean;
     };
@@ -64,9 +66,9 @@ type ResolveQuery<
   T extends QueryDefinitions,
   U extends Record<string, unknown>
 > = {
-  [K in keyof T]: T[K] extends AliasQueryDefinitions
+  [K in keyof T]: T[K] extends AliasQueryDefinition
     ? T[K]["$ALIAS"] extends keyof U
-      ? T[K]["$QUERY"] extends ListQueryDefinitions
+      ? T[K]["$QUERY"] extends ListQueryDefinition
         ? U[T[K]["$ALIAS"]] extends ListQuery<any, infer Q>
           ? Array<ResolveQuery<T[K]["$QUERY"][1], Q>>
           : U[T[K]["$ALIAS"]] extends FieldQuery<any, infer Q>
@@ -75,7 +77,7 @@ type ResolveQuery<
         : never
       : never
     : K extends keyof U
-    ? T[K] extends ListQueryDefinitions
+    ? T[K] extends ListQueryDefinition
       ? U[K] extends ListQuery<any, infer Q>
         ? Array<ResolveQuery<T[K][1], Q>>
         : U[K] extends FieldQuery<any, infer Q>
@@ -113,9 +115,21 @@ export function createQueryArgumentsString(
     .join(", ")})`;
 }
 
+export function isListQueryDefinition(
+  queryDefinition: QueryDefinition
+): queryDefinition is ListQueryDefinition {
+  return Array.isArray(queryDefinition) && queryDefinition.length === 2;
+}
+
+export function isFieldQueryDefinition(
+  queryDefinition: QueryDefinition
+): queryDefinition is FieldQueryDefinition {
+  return Array.isArray(queryDefinition) && queryDefinition.length === 1;
+}
+
 export function isAliasQueryDefinition(
   queryDefinition: QueryDefinition
-): queryDefinition is AliasQueryDefinitions {
+): queryDefinition is AliasQueryDefinition {
   return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
 }
 
@@ -137,11 +151,11 @@ export function createQueryBodyString(
 
     if (value === true) {
       string += "\n";
-    } else if (Array.isArray(value) && value.length === 1) {
+    } else if (isFieldQueryDefinition(value)) {
       string +=
         createQueryArgumentsString(field, value[0], detectedVariableTypes) +
         "\n";
-    } else if (Array.isArray(value) && value.length === 2) {
+    } else if (isListQueryDefinition(value)) {
       string +=
         createQueryArgumentsString(field, value[0], detectedVariableTypes) +
         createQueryBodyString(value[1], detectedVariableTypes, level + 1);
@@ -156,11 +170,7 @@ export function createQueryBodyString(
         level + 1
       )}`;
     } else {
-      string += createQueryBodyString(
-        value as QueryDefinitions,
-        detectedVariableTypes,
-        level + 1
-      );
+      string += createQueryBodyString(value, detectedVariableTypes, level + 1);
     }
   }
 
