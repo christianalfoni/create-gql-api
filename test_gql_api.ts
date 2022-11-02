@@ -20,8 +20,17 @@ const api = createApi((query, variables) => {
     .then(({ data }) => data);
 });
 
-api.createQuery("SomeQuery", {
-  me: {
-    email: true,
-  },
+const querySandbox = api.createQuery("SomeQuery", {
+  sandbox: [
+    { sandboxId: "new" },
+    {
+      title: true,
+      description: true,
+      author: {
+        name: true,
+      },
+    },
+  ],
 });
+
+querySandbox();

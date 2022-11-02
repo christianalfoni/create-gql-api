@@ -155,6 +155,12 @@ export function createQueryBodyString(
         detectedVariableTypes,
         level + 1
       )}`;
+    } else {
+      string += createQueryBodyString(
+        value as QueryDefinitions,
+        detectedVariableTypes,
+        level + 1
+      );
     }
   }
 
