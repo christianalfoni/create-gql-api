@@ -12725,6 +12725,12 @@ function createQueryBodyString(QueryDefinitions, detectedVariableTypes, level = 
         detectedVariableTypes,
         level + 1
       )}`;
+    } else {
+      string += createQueryBodyString(
+        value,
+        detectedVariableTypes,
+        level + 1
+      );
     }
   }
   string += "  ".repeat(level - 1) + "}\n";
@@ -12740,34 +12746,88 @@ function createVariablesString(variables, detectedVariableTypes) {
     return `${varKey}: ${gqlType.type}${gqlType.isNonNull ? "!" : ""}`;
   }).join(", ");
 }
-function createQueryString(name, query, variables) {
-  const detectedVariableTypes = {};
-  const queryBodyString = createQueryBodyString(query, detectedVariableTypes);
-  return `query ${name} ${variables ? `(${createVariablesString(variables, detectedVariableTypes)})` : ""}${queryBodyString}`;
+function createQueryStringFactory(type) {
+  return function createQueryStringFactory2(name, query, variables) {
+    const detectedVariableTypes = {};
+    const queryBodyString = createQueryBodyString(query, detectedVariableTypes);
+    return `${type} ${name} ${variables ? `(${createVariablesString(variables, detectedVariableTypes)})` : ""}${queryBodyString}`;
+  };
 }
-var createApi = (request) => ({
-  query: (name, cb) => (variables) => {
-    const query = typeof cb === "function" ? cb(
-      Object.keys(variables || {}).reduce(
-        (aggr, key) => {
-          aggr[key] = "$" + key;
-          return aggr;
-        },
-        {}
-      )
-    ) : cb;
-    return request(
-      createQueryString(name, query, variables ? variables : void 0),
-      variables ? Object.keys(variables).reduce(
-        (aggr, key) => {
-          aggr[key] = variables[key];
-          return aggr;
-        },
-        {}
-      ) : {}
-    );
-  }
-});
+function createApi(request, subscribe) {
+  const createQueryString = createQueryStringFactory("query");
+  const createMutationString = createQueryStringFactory("mutation");
+  const createSubscriptionString = createQueryStringFactory("subscription");
+  return {
+    createMutation: (name, cb) => (variables) => {
+      const query = typeof cb === "function" ? cb(
+        Object.keys(variables || {}).reduce(
+          (aggr, key) => {
+            aggr[key] = "$" + key;
+            return aggr;
+          },
+          {}
+        )
+      ) : cb;
+      return request(
+        createMutationString(name, query, variables ? variables : void 0),
+        variables ? Object.keys(variables).reduce(
+          (aggr, key) => {
+            aggr[key] = variables[key];
+            return aggr;
+          },
+          {}
+        ) : {}
+      );
+    },
+    createQuery: (name, cb) => (variables) => {
+      const query = typeof cb === "function" ? cb(
+        Object.keys(variables || {}).reduce(
+          (aggr, key) => {
+            aggr[key] = "$" + key;
+            return aggr;
+          },
+          {}
+        )
+      ) : cb;
+      return request(
+        createQueryString(name, query, variables ? variables : void 0),
+        variables ? Object.keys(variables).reduce(
+          (aggr, key) => {
+            aggr[key] = variables[key];
+            return aggr;
+          },
+          {}
+        ) : {}
+      );
+    },
+    createSubscription: subscribe ? (name, cb) => (onMessage, variables) => {
+      const query = typeof cb === "function" ? cb(
+        Object.keys(variables || {}).reduce(
+          (aggr, key) => {
+            aggr[key] = "$" + key;
+            return aggr;
+          },
+          {}
+        )
+      ) : cb;
+      return subscribe(
+        createSubscriptionString(
+          name,
+          query,
+          variables ? variables : void 0
+        ),
+        variables ? Object.keys(variables).reduce(
+          (aggr, key) => {
+            aggr[key] = variables[key];
+            return aggr;
+          },
+          {}
+        ) : {},
+        onMessage
+      );
+    } : void 0
+  };
+}
 
 // test_gql_api.ts
 var api = createApi((query, variables) => {
@@ -12785,28 +12845,19 @@ var api = createApi((query, variables) => {
     }
   ).then(({ data }) => data);
 });
-var meQuery = api.query("Me", ({ gitProvider, owner, repo }) => ({
-  project: [
-    { gitProvider, owner, repo },
+var querySandbox = api.createQuery("SomeQuery", {
+  sandbox: [
+    { sandboxId: "new" },
     {
-      owner: true
-    }
-  ],
-  project2: {
-    $ALIAS: "project",
-    $QUERY: [
-      { gitProvider, owner, repo },
-      {
-        appInstalled: true
+      title: true,
+      description: true,
+      author: {
+        name: true
       }
-    ]
-  }
-}));
-meQuery({
-  gitProvider: "GITHUB" /* GITHUB */,
-  owner: "codesandbox",
-  repo: "test-sandbox"
-}).then(console.log);
+    }
+  ]
+});
+querySandbox();
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
