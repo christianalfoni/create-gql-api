@@ -1255,6 +1255,8 @@ const argumentsByField = {
     }
   }
 };
+// This file is read and written using FS. The Query types will be available in the merged
+// generated file
 type FieldQuery<A extends Record<string, unknown>, T> = T & { __: A };
 
 type ListQuery<
@@ -1262,21 +1264,21 @@ type ListQuery<
   T extends Record<string, unknown>
 > = Array<T> & { __: A };
 
-type ListQueryDefinitions = [
+type ObjectQueryDefinition = [
   Record<string, unknown>,
   QueryDefinitions,
   ...never[]
 ];
 
-type FieldQueryDefinitions = [Record<string, unknown>, ...never[]];
+type FieldQueryDefinition = [Record<string, unknown>, ...never[]];
 
-type AliasQueryDefinitions = { $ALIAS: string; $QUERY: ListQueryDefinitions };
+type AliasQueryDefinition = { $ALIAS: string; $QUERY: ObjectQueryDefinition };
 
 type QueryDefinition =
   | boolean
-  | ListQueryDefinitions
-  | FieldQueryDefinitions
-  | AliasQueryDefinitions
+  | ObjectQueryDefinition
+  | FieldQueryDefinition
+  | AliasQueryDefinition
   | QueryDefinitions;
 
 type QueryDefinitions = {
@@ -1311,8 +1313,8 @@ type ResolveQueryDefinitions<T extends Record<string, unknown>> =
                 }
               : never;
           }[keyof T]
-        | ListQueryDefinitions
-        | FieldQueryDefinitions
+        | ObjectQueryDefinition
+        | FieldQueryDefinition
         | ResolveQueryDefinitions<{}>
         | boolean;
     };
@@ -1321,22 +1323,26 @@ type ResolveQuery<
   T extends QueryDefinitions,
   U extends Record<string, unknown>
 > = {
-  [K in keyof T]: T[K] extends AliasQueryDefinitions
+  [K in keyof T]: T[K] extends AliasQueryDefinition
     ? T[K]["$ALIAS"] extends keyof U
-      ? T[K]["$QUERY"] extends ListQueryDefinitions
+      ? T[K]["$QUERY"] extends ObjectQueryDefinition
         ? U[T[K]["$ALIAS"]] extends ListQuery<any, infer Q>
           ? Array<ResolveQuery<T[K]["$QUERY"][1], Q>>
           : U[T[K]["$ALIAS"]] extends FieldQuery<any, infer Q>
-          ? Q
+          ? Q extends Record<string, unknown>
+            ? ResolveQuery<T[K]["$QUERY"][1], Q>
+            : Q
           : U[T[K]["$ALIAS"]]
         : never
       : never
     : K extends keyof U
-    ? T[K] extends ListQueryDefinitions
+    ? T[K] extends ObjectQueryDefinition
       ? U[K] extends ListQuery<any, infer Q>
         ? Array<ResolveQuery<T[K][1], Q>>
         : U[K] extends FieldQuery<any, infer Q>
-        ? Q
+        ? Q extends Record<string, unknown>
+          ? ResolveQuery<T[K][1], Q>
+          : Q
         : never
       : T[K] extends QueryDefinitions
       ? U[K] extends Record<string, unknown>
@@ -1350,6 +1356,48 @@ type DetectedVariableTypes = Record<
   string,
   { isNonNull: boolean; type: string }
 >;
+
+export type Requester = (
+  query: string,
+  variables: Record<string, unknown> | void
+) => Promise<Record<string, unknown>>;
+
+export type Subscriber = (
+  query: string,
+  onMessage: (message: unknown) => void,
+  variables: Record<string, unknown> | void
+) => () => void;
+
+export function createRequester(
+  request: Requester
+): <
+  T extends (
+    request: Requester,
+    variables: any
+  ) => Promise<Record<string, unknown>>
+>(
+  query: T,
+  ...variables: Parameters<T>[1] extends void ? [] : [Parameters<T>[1]]
+) => ReturnType<T> {
+  return (query, ...variables) => query(request, variables[0]) as any;
+}
+
+export function createSubscriber(
+  subscribe: Subscriber
+): <
+  T extends (
+    subscribe: Subscriber,
+    onMessage: (message: unknown) => void,
+    variables: any
+  ) => () => void
+>(
+  query: T,
+  onMessage: Parameters<T>[1],
+  ...variables: Parameters<T>[2] extends void ? [] : [Parameters<T>[2]]
+) => ReturnType<T> {
+  return (query, onMessage, ...variables) =>
+    query(subscribe, onMessage, variables[0]) as any;
+}
 
 export function createQueryArgumentsString(
   fieldKey: string,
@@ -1370,9 +1418,21 @@ export function createQueryArgumentsString(
     .join(", ")})`;
 }
 
+export function isObjectQueryDefinition(
+  queryDefinition: QueryDefinition
+): queryDefinition is ObjectQueryDefinition {
+  return Array.isArray(queryDefinition) && queryDefinition.length === 2;
+}
+
+export function isFieldQueryDefinition(
+  queryDefinition: QueryDefinition
+): queryDefinition is FieldQueryDefinition {
+  return Array.isArray(queryDefinition) && queryDefinition.length === 1;
+}
+
 export function isAliasQueryDefinition(
   queryDefinition: QueryDefinition
-): queryDefinition is AliasQueryDefinitions {
+): queryDefinition is AliasQueryDefinition {
   return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
 }
 
@@ -1394,11 +1454,11 @@ export function createQueryBodyString(
 
     if (value === true) {
       string += "\n";
-    } else if (Array.isArray(value) && value.length === 1) {
+    } else if (isFieldQueryDefinition(value)) {
       string +=
         createQueryArgumentsString(field, value[0], detectedVariableTypes) +
         "\n";
-    } else if (Array.isArray(value) && value.length === 2) {
+    } else if (isObjectQueryDefinition(value)) {
       string +=
         createQueryArgumentsString(field, value[0], detectedVariableTypes) +
         createQueryBodyString(value[1], detectedVariableTypes, level + 1);
@@ -1413,11 +1473,7 @@ export function createQueryBodyString(
         level + 1
       )}`;
     } else {
-      string += createQueryBodyString(
-        value as QueryDefinitions,
-        detectedVariableTypes,
-        level + 1
-      );
+      string += createQueryBodyString(value, detectedVariableTypes, level + 1);
     }
   }
 
@@ -1464,192 +1520,131 @@ function createQueryStringFactory(type: string) {
   };
 }
 
-export function createApi(
-  request: (
-    query: string,
-    variables: Record<string, unknown>
-  ) => Promise<unknown>,
-  subscribe: (
-    query: string,
-    variables: Record<string, unknown>,
-    onMessage: (message: unknown) => void
-  ) => () => void
-): {
-  createQuery: <
-    V extends Record<string, unknown> | void,
-    T extends ResolveQueryDefinitions<RootQueryType>
-  >(
-    name: string,
-    cb: T | ((variables: V) => T)
-  ) => (variables: V) => Promise<ResolveQuery<T, RootQueryType>>;
-  createMutation: <
+const createQueryString = createQueryStringFactory("query");
+const createMutationString = createQueryStringFactory("mutation");
+const createSubscriptionString = createQueryStringFactory("subscription");
+
+export const createMutation =
+  <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootMutationType>
   >(
     name: string,
     cb: T | ((variables: V) => T)
-  ) => (variables: V) => Promise<ResolveQuery<T, RootMutationType>>;
-  createSubscription: <
+  ) =>
+  (
+    request: Requester,
+    variables: V
+  ): Promise<ResolveQuery<T, RootMutationType>> => {
+    const query =
+      typeof cb === "function"
+        ? cb(
+            Object.keys(variables || {}).reduce<Record<string, string>>(
+              (aggr, key) => {
+                aggr[key] = "$" + key;
+
+                return aggr;
+              },
+              {}
+            ) as V
+          )
+        : cb;
+
+    return request(
+      createMutationString(name, query, variables ? variables : undefined),
+      variables
+        ? Object.keys(variables).reduce<Record<string, unknown>>(
+            (aggr, key) => {
+              aggr[key] = variables[key];
+
+              return aggr;
+            },
+            {}
+          )
+        : {}
+    ) as Promise<ResolveQuery<T, RootMutationType>>;
+  };
+
+export const createQuery =
+  <
+    V extends Record<string, unknown> | void,
+    T extends ResolveQueryDefinitions<RootQueryType>
+  >(
+    name: string,
+    cb: T | ((variables: V) => T)
+  ) =>
+  (
+    request: Requester,
+    variables: V
+  ): Promise<ResolveQuery<T, RootQueryType>> => {
+    const query =
+      typeof cb === "function"
+        ? cb(
+            Object.keys(variables || {}).reduce<Record<string, string>>(
+              (aggr, key) => {
+                aggr[key] = "$" + key;
+
+                return aggr;
+              },
+              {}
+            ) as V
+          )
+        : cb;
+
+    return request(
+      createQueryString(name, query, variables ? variables : undefined),
+      variables
+        ? Object.keys(variables).reduce<Record<string, unknown>>(
+            (aggr, key) => {
+              aggr[key] = variables[key];
+
+              return aggr;
+            },
+            {}
+          )
+        : {}
+    ) as Promise<ResolveQuery<T, RootQueryType>>;
+  };
+
+export const createSubscription =
+  <
     V extends Record<string, unknown> | void,
     T extends ResolveQueryDefinitions<RootSubscriptionType>
   >(
     name: string,
     cb: T | ((variables: V) => T)
-  ) => (onMessage: (message: T) => void, variables: V) => () => void;
-};
-export function createApi(
-  request: (
-    query: string,
-    variables: Record<string, unknown>
-  ) => Promise<unknown>
-): {
-  createQuery: <
-    V extends Record<string, unknown> | void,
-    T extends ResolveQueryDefinitions<RootQueryType>
-  >(
-    name: string,
-    cb: T | ((variables: V) => T)
-  ) => (variables: V) => Promise<ResolveQuery<T, RootQueryType>>;
-  createMutation: <
-    V extends Record<string, unknown> | void,
-    T extends ResolveQueryDefinitions<RootMutationType>
-  >(
-    name: string,
-    cb: T | ((variables: V) => T)
-  ) => (variables: V) => Promise<ResolveQuery<T, RootMutationType>>;
-};
-export function createApi(
-  request: (
-    query: string,
-    variables: Record<string, unknown>
-  ) => Promise<unknown>,
-  subscribe?: (
-    query: string,
-    variables: Record<string, unknown>,
-    onMessage: (message: unknown) => void
-  ) => () => void
-) {
-  const createQueryString = createQueryStringFactory("query");
-  const createMutationString = createQueryStringFactory("mutation");
-  const createSubscriptionString = createQueryStringFactory("subscription");
+  ) =>
+  (
+    subscribe: Subscriber,
+    onMessage: (message: T) => void,
+    variables: V
+  ): (() => void) => {
+    const query =
+      typeof cb === "function"
+        ? cb(
+            Object.keys(variables || {}).reduce<Record<string, string>>(
+              (aggr, key) => {
+                aggr[key] = "$" + key;
 
-  return {
-    createMutation:
-      <
-        V extends Record<string, unknown> | void,
-        T extends ResolveQueryDefinitions<RootMutationType>
-      >(
-        name: string,
-        cb: T | ((variables: V) => T)
-      ) =>
-      (variables: V): Promise<ResolveQuery<T, RootMutationType>> => {
-        const query =
-          typeof cb === "function"
-            ? cb(
-                Object.keys(variables || {}).reduce<Record<string, string>>(
-                  (aggr, key) => {
-                    aggr[key] = "$" + key;
+                return aggr;
+              },
+              {}
+            ) as V
+          )
+        : cb;
 
-                    return aggr;
-                  },
-                  {}
-                ) as V
-              )
-            : cb;
+    return subscribe(
+      createSubscriptionString(name, query, variables ? variables : undefined),
+      onMessage as any,
+      variables
+        ? Object.keys(variables).reduce<Record<string, unknown>>(
+            (aggr, key) => {
+              aggr[key] = variables[key];
 
-        return request(
-          createMutationString(name, query, variables ? variables : undefined),
-          variables
-            ? Object.keys(variables).reduce<Record<string, unknown>>(
-                (aggr, key) => {
-                  aggr[key] = variables[key];
-
-                  return aggr;
-                },
-                {}
-              )
-            : {}
-        ) as Promise<ResolveQuery<T, RootMutationType>>;
-      },
-    createQuery:
-      <
-        V extends Record<string, unknown> | void,
-        T extends ResolveQueryDefinitions<RootQueryType>
-      >(
-        name: string,
-        cb: T | ((variables: V) => T)
-      ) =>
-      (variables: V): Promise<ResolveQuery<T, RootQueryType>> => {
-        const query =
-          typeof cb === "function"
-            ? cb(
-                Object.keys(variables || {}).reduce<Record<string, string>>(
-                  (aggr, key) => {
-                    aggr[key] = "$" + key;
-
-                    return aggr;
-                  },
-                  {}
-                ) as V
-              )
-            : cb;
-
-        return request(
-          createQueryString(name, query, variables ? variables : undefined),
-          variables
-            ? Object.keys(variables).reduce<Record<string, unknown>>(
-                (aggr, key) => {
-                  aggr[key] = variables[key];
-
-                  return aggr;
-                },
-                {}
-              )
-            : {}
-        ) as Promise<ResolveQuery<T, RootQueryType>>;
-      },
-    createSubscription: subscribe
-      ? <
-            V extends Record<string, unknown> | void,
-            T extends ResolveQueryDefinitions<RootSubscriptionType>
-          >(
-            name: string,
-            cb: T | ((variables: V) => T)
-          ) =>
-          (onMessage: (message: T) => void, variables: V): (() => void) => {
-            const query =
-              typeof cb === "function"
-                ? cb(
-                    Object.keys(variables || {}).reduce<Record<string, string>>(
-                      (aggr, key) => {
-                        aggr[key] = "$" + key;
-
-                        return aggr;
-                      },
-                      {}
-                    ) as V
-                  )
-                : cb;
-
-            return subscribe(
-              createSubscriptionString(
-                name,
-                query,
-                variables ? variables : undefined
-              ),
-              variables
-                ? Object.keys(variables).reduce<Record<string, unknown>>(
-                    (aggr, key) => {
-                      aggr[key] = variables[key];
-
-                      return aggr;
-                    },
-                    {}
-                  )
-                : {},
-              onMessage as any
-            );
-          }
-      : undefined,
+              return aggr;
+            },
+            {}
+          )
+        : {}
+    );
   };
-}

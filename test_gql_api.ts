@@ -1,7 +1,7 @@
 import axios from "axios";
-import { createApi, GitProvider } from "./gql_api";
+import { createQuery, createRequester } from "./gql_api";
 
-const api = createApi((query, variables) => {
+const query = createRequester((query, variables) => {
   console.log(query, variables);
 
   return axios
@@ -20,9 +20,9 @@ const api = createApi((query, variables) => {
     .then(({ data }) => data);
 });
 
-const querySandbox = api.createQuery("SomeQuery", {
+const querySandbox = createQuery("SomeQuery", ({ id }: { id: string }) => ({
   sandbox: [
-    { sandboxId: "new" },
+    { sandboxId: id },
     {
       title: true,
       description: true,
@@ -31,6 +31,4 @@ const querySandbox = api.createQuery("SomeQuery", {
       },
     },
   ],
-});
-
-querySandbox();
+}));
