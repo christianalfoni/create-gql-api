@@ -10,15 +10,18 @@ npx create-gql-api https://example.domain/graphql gql_api.ts
 This generates a `gql_api.ts` file in your project.
 
 ```ts
-import { createApi } from './gql_api.ts'
+import { createRequester, createSubscriber, createQuery, createMutation, createSubscription } from './gql_api.ts'
 
-const api = createApi(
+const query = createRequester(
     (query, variables) => {
         // Implement the GraphQL POST request with the
         // query, variables and any authentication you use
         // for your app
         return new Promise(() => {})
-    },
+    }
+)
+
+const subscribe = createSubscriber(
     (query, variables, onMessage) => {
         // Optionally implement subscription handling
         // Call "onMessage" with new data
@@ -28,19 +31,19 @@ const api = createApi(
 )
 
 // Create a query by giving it a name and what fields to include
-export const queryFoo = api.createQuery("Foo", {
+export const queryFoo = createQuery("Foo", {
     foo: {
         name: true,
         email: true
     }
 })
-queryFoo()
+query(queryFoo)
 
 // Query on simple values
 export const queryBar = api.createQuery("Bar", {
     bar: [{ unit: 'FOOTER' }]
 })
-queryBar()
+query(queryBar)
 
 // Query on object and lists
 export const queryBaz = api.createQuery("Baz", {
@@ -48,27 +51,27 @@ export const queryBaz = api.createQuery("Baz", {
         id: true
     }]
 })
-queryBaz()
+query(queryBaz)
 
 // Query with variables
-export const queryBazWithVars = api.createQuery("BazWithVars", (vars: { id: string }) => ({
+export const queryBazWithVars = createQuery("BazWithVars", (vars: { id: string }) => ({
     baz: [{ id: vars.id }, {
         id: true
     }]
 }))
-queryBazWithVars({ id: '123' })
+query(queryBazWithVars, { id: '123' })
 
 // Mutations works like queries
-export const mutateSomething = api.createMutation("Something", () => ({
+export const mutateSomething = createMutation("Something", () => ({
     something: [{}]
 }))
-mutateSomething()
+query(mutateSomething)
 
 // Subscriptions 
-export const subscribeSomething = api.createSubscription("Something", (vars: { id: string }) => ({
+export const subscribeSomething = createSubscription("Something", (vars: { id: string }) => ({
     something: [{ id: vars.id }]
 }))
-subscribeSomething((data) => {
+subscribe(subscribeSomething, (data) => {
     // Handle the data
 }, { id: '123' }) // Returns disposer
 ```
