@@ -32,3 +32,7 @@ const querySandbox = createQuery("SomeQuery", ({ id }: { id: string }) => ({
     },
   ],
 }));
+
+const resp = query(querySandbox, { id: "123" });
+
+resp.then(data => data.sandbox.author.)
