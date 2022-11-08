@@ -1018,7 +1018,58 @@ export type WorkspaceSandboxSettings = {
   preventSandboxExport: boolean
   preventSandboxLeaving: boolean
 }
-
+export type ObjectTypes = {
+  Album: Album;
+  BillingDetails: BillingDetails;
+  BillingPreview: BillingPreview;
+  Bookmarked: Bookmarked;
+  Branch: Branch;
+  BranchConnections: BranchConnections;
+  BranchLastCommit: BranchLastCommit;
+  BranchStatus: BranchStatus;
+  CodeReferenceMetadata: CodeReferenceMetadata;
+  Collaborator: Collaborator;
+  Collection: Collection;
+  Comment: Comment;
+  Connection: Connection;
+  CurrentUser: CurrentUser;
+  Environment: Environment;
+  FeatureFlag: FeatureFlag;
+  Git: Git;
+  GithubOrganization: GithubOrganization;
+  GithubProfile: GithubProfile;
+  GithubRepo: GithubRepo;
+  GitHubRepository: GitHubRepository;
+  GitV2: GitV2;
+  ImageReferenceMetadata: ImageReferenceMetadata;
+  InstallationEvent: InstallationEvent;
+  Invitation: Invitation;
+  LastCommit: LastCommit;
+  Notification: Notification;
+  NotificationPreferences: NotificationPreferences;
+  PreviewReferenceMetadata: PreviewReferenceMetadata;
+  PrivateRegistry: PrivateRegistry;
+  Project: Project;
+  ProSubscription: ProSubscription;
+  PullRequest: PullRequest;
+  Reference: Reference;
+  RootMutationType: RootMutationType;
+  RootQueryType: RootQueryType;
+  RootSubscriptionType: RootSubscriptionType;
+  Sandbox: Sandbox;
+  SandboxProtectionSettings: SandboxProtectionSettings;
+  SandboxV2: SandboxV2;
+  Source: Source;
+  Status: Status;
+  StatusCommitCounts: StatusCommitCounts;
+  Team: Team;
+  TeamsFeatureFlag: TeamsFeatureFlag;
+  Template: Template;
+  User: User;
+  UserAuthorization: UserAuthorization;
+  UserReferenceMetadata: UserReferenceMetadata;
+  WorkspaceSandboxSettings: WorkspaceSandboxSettings;
+}
 const argumentsByField = {
   "collection": {
     "path": {
