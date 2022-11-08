@@ -12686,7 +12686,27 @@ var argumentsByField = {
       "isNonNull": false,
       "type": "Boolean"
     }
+  },
+  "subscription": {
+    "includeCancelled": {
+      "isNonNull": false,
+      "type": "Boolean"
+    }
   }
+};
+var createClient = ({
+  onRequest,
+  onSubscribe,
+  includeTypeNames,
+  cacheQueries
+}) => {
+  return {
+    query: (query, ...variables) => query(onRequest, variables[0], { includeTypeNames, cacheQueries }),
+    subscribe: (query, onMessage, ...variables) => query(onSubscribe, onMessage, variables[0], {
+      includeTypeNames,
+      cacheQueries
+    })
+  };
 };
 function createQueryArgumentsString(fieldKey, args, detectedVariableTypes) {
   return `(${Object.keys(args).reduce((aggr, key) => {
@@ -12698,11 +12718,20 @@ function createQueryArgumentsString(fieldKey, args, detectedVariableTypes) {
     return aggr.concat(`${key}: ${isVariable ? val : `"${val}"`}`);
   }, []).join(", ")})`;
 }
+function isObjectQueryDefinition(queryDefinition) {
+  return Array.isArray(queryDefinition) && queryDefinition.length === 2;
+}
+function isFieldQueryDefinition(queryDefinition) {
+  return Array.isArray(queryDefinition) && queryDefinition.length === 1;
+}
 function isAliasQueryDefinition(queryDefinition) {
   return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
 }
-function createQueryBodyString(QueryDefinitions, detectedVariableTypes, level = 1) {
+function createQueryBodyString(QueryDefinitions, detectedVariableTypes, includeTypeNames, level = 1) {
   let string = " {\n";
+  if (includeTypeNames) {
+    string += "  ".repeat(level) + "__typename\n";
+  }
   for (const field in QueryDefinitions) {
     const value = QueryDefinitions[field];
     if (value === false) {
@@ -12711,10 +12740,15 @@ function createQueryBodyString(QueryDefinitions, detectedVariableTypes, level = 
     string += "  ".repeat(level) + field;
     if (value === true) {
       string += "\n";
-    } else if (Array.isArray(value) && value.length === 1) {
+    } else if (isFieldQueryDefinition(value)) {
       string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + "\n";
-    } else if (Array.isArray(value) && value.length === 2) {
-      string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + createQueryBodyString(value[1], detectedVariableTypes, level + 1);
+    } else if (isObjectQueryDefinition(value)) {
+      string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + createQueryBodyString(
+        value[1],
+        detectedVariableTypes,
+        includeTypeNames,
+        level + 1
+      );
     } else if (isAliasQueryDefinition(value)) {
       string += `: ${value.$ALIAS}${createQueryArgumentsString(
         value.$ALIAS,
@@ -12723,12 +12757,14 @@ function createQueryBodyString(QueryDefinitions, detectedVariableTypes, level = 
       )}${createQueryBodyString(
         value.$QUERY[1],
         detectedVariableTypes,
+        includeTypeNames,
         level + 1
       )}`;
     } else {
       string += createQueryBodyString(
         value,
         detectedVariableTypes,
+        includeTypeNames,
         level + 1
       );
     }
@@ -12747,107 +12783,74 @@ function createVariablesString(variables, detectedVariableTypes) {
   }).join(", ");
 }
 function createQueryStringFactory(type) {
-  return function createQueryStringFactory2(name, query, variables) {
+  return function createQueryStringFactory2(name, query, variables, includeTypeNames) {
     const detectedVariableTypes = {};
-    const queryBodyString = createQueryBodyString(query, detectedVariableTypes);
+    const queryBodyString = createQueryBodyString(
+      query,
+      detectedVariableTypes,
+      includeTypeNames
+    );
     return `${type} ${name} ${variables ? `(${createVariablesString(variables, detectedVariableTypes)})` : ""}${queryBodyString}`;
   };
 }
-function createApi(request, subscribe) {
-  const createQueryString = createQueryStringFactory("query");
-  const createMutationString = createQueryStringFactory("mutation");
-  const createSubscriptionString = createQueryStringFactory("subscription");
-  return {
-    createMutation: (name, cb) => (variables) => {
-      const query = typeof cb === "function" ? cb(
-        Object.keys(variables || {}).reduce(
-          (aggr, key) => {
-            aggr[key] = "$" + key;
-            return aggr;
-          },
-          {}
-        )
-      ) : cb;
-      return request(
-        createMutationString(name, query, variables ? variables : void 0),
-        variables ? Object.keys(variables).reduce(
-          (aggr, key) => {
-            aggr[key] = variables[key];
-            return aggr;
-          },
-          {}
-        ) : {}
-      );
-    },
-    createQuery: (name, cb) => (variables) => {
-      const query = typeof cb === "function" ? cb(
-        Object.keys(variables || {}).reduce(
-          (aggr, key) => {
-            aggr[key] = "$" + key;
-            return aggr;
-          },
-          {}
-        )
-      ) : cb;
-      return request(
-        createQueryString(name, query, variables ? variables : void 0),
-        variables ? Object.keys(variables).reduce(
-          (aggr, key) => {
-            aggr[key] = variables[key];
-            return aggr;
-          },
-          {}
-        ) : {}
-      );
-    },
-    createSubscription: subscribe ? (name, cb) => (onMessage, variables) => {
-      const query = typeof cb === "function" ? cb(
-        Object.keys(variables || {}).reduce(
-          (aggr, key) => {
-            aggr[key] = "$" + key;
-            return aggr;
-          },
-          {}
-        )
-      ) : cb;
-      return subscribe(
-        createSubscriptionString(
-          name,
-          query,
-          variables ? variables : void 0
-        ),
-        variables ? Object.keys(variables).reduce(
-          (aggr, key) => {
-            aggr[key] = variables[key];
-            return aggr;
-          },
-          {}
-        ) : {},
-        onMessage
-      );
-    } : void 0
-  };
-}
+var createQueryString = createQueryStringFactory("query");
+var createMutationString = createQueryStringFactory("mutation");
+var createSubscriptionString = createQueryStringFactory("subscription");
+var createQuery = (name, cb) => (request, variables, {
+  cacheQueries,
+  includeTypeNames
+}) => {
+  const query = typeof cb === "function" ? cb(
+    Object.keys(variables || {}).reduce(
+      (aggr, key) => {
+        aggr[key] = "$" + key;
+        return aggr;
+      },
+      {}
+    )
+  ) : cb;
+  return request(
+    createQueryString(
+      name,
+      query,
+      variables ? variables : void 0,
+      includeTypeNames
+    ),
+    variables ? Object.keys(variables).reduce(
+      (aggr, key) => {
+        aggr[key] = variables[key];
+        return aggr;
+      },
+      {}
+    ) : {}
+  );
+};
 
 // test_gql_api.ts
-var api = createApi((query, variables) => {
-  console.log(query, variables);
-  return axios_default2.post(
-    "https://codesandbox.stream/api/graphql",
-    {
-      query,
-      variables
-    },
-    {
-      headers: {
-        "Content-Type": "application/json"
+var client = createClient({
+  onRequest: (query, variables) => {
+    console.log(query, variables);
+    return axios_default2.post(
+      "https://codesandbox.stream/api/graphql",
+      {
+        query,
+        variables
+      },
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
       }
-    }
-  ).then(({ data }) => data);
+    ).then(({ data }) => data);
+  },
+  onSubscribe: () => () => {
+  },
+  cacheQueries: true,
+  includeTypeNames: true
 });
-var querySandbox = api.createQuery("SomeQuery", {
+var querySandbox = createQuery("SomeQuery", ({ id }) => ({
   sandbox: [
-    { sandboxId: "new" },
+    { sandboxId: id },
     {
       title: true,
       description: true,
@@ -12856,8 +12859,9 @@ var querySandbox = api.createQuery("SomeQuery", {
       }
     }
   ]
-});
-querySandbox();
+}));
+var resp = client.query(querySandbox, { id: "new" });
+resp.then(console.log);
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong

@@ -171,6 +171,7 @@ export function createTypes(definitions: GQL.DocumentNode["definitions"]) {
   let types = "";
 
   const scalarTypeDefinitions: GQL.ScalarTypeDefinitionNode[] = [];
+  const objectTypes = new Set<string>();
 
   for (const definition of definitions) {
     if (definition.kind === GQL.Kind.SCALAR_TYPE_DEFINITION) {
@@ -179,6 +180,7 @@ export function createTypes(definitions: GQL.DocumentNode["definitions"]) {
     }
     if (definition.kind === GQL.Kind.OBJECT_TYPE_DEFINITION) {
       types += createObjectType(definition);
+      objectTypes.add(definition.name.value);
       continue;
     }
     if (definition.kind === GQL.Kind.INPUT_OBJECT_TYPE_DEFINITION) {
@@ -194,6 +196,14 @@ export function createTypes(definitions: GQL.DocumentNode["definitions"]) {
       continue;
     }
   }
+
+  types += "export type ObjectTypes = {\n";
+
+  objectTypes.forEach((type) => {
+    types += `  ${type}: ${type};\n`;
+  });
+
+  types += "}";
 
   return types;
 }
