@@ -111,36 +111,50 @@ export type Subscriber = (
   variables: Record<string, unknown> | void
 ) => () => void;
 
-export function createRequester(
-  request: Requester
-): <
-  T extends (
-    request: Requester,
-    variables: any
-  ) => Promise<Record<string, unknown>>
->(
-  query: T,
-  ...variables: Parameters<T>[1] extends void ? [] : [Parameters<T>[1]]
-) => ReturnType<T> {
-  return (query, ...variables) => query(request, variables[0]) as any;
-}
-
-export function createSubscriber(
-  subscribe: Subscriber
-): <
-  T extends (
-    subscribe: Subscriber,
-    onMessage: (message: unknown) => void,
-    variables: any
-  ) => () => void
->(
-  query: T,
-  onMessage: Parameters<T>[1],
-  ...variables: Parameters<T>[2] extends void ? [] : [Parameters<T>[2]]
-) => ReturnType<T> {
-  return (query, onMessage, ...variables) =>
-    query(subscribe, onMessage, variables[0]) as any;
-}
+export const createClient = ({
+  onRequest,
+  onSubscribe,
+  includeTypeNames,
+  cacheQueries,
+}: {
+  onRequest: Requester;
+  onSubscribe: Subscriber;
+  includeTypeNames: boolean;
+  cacheQueries: boolean;
+}): {
+  query: <
+    T extends (
+      request: Requester,
+      variables: any,
+      options: { includeTypeNames: boolean; cacheQueries: boolean }
+    ) => Promise<Record<string, unknown>>
+  >(
+    query: T,
+    ...variables: Parameters<T>[1] extends void ? [] : [Parameters<T>[1]]
+  ) => ReturnType<T>;
+  subscribe: <
+    T extends (
+      subscribe: Subscriber,
+      onMessage: (message: unknown) => void,
+      variables: any,
+      options: { includeTypeNames: boolean; cacheQueries: boolean }
+    ) => () => void
+  >(
+    query: T,
+    onMessage: Parameters<T>[1],
+    ...variables: Parameters<T>[2] extends void ? [] : [Parameters<T>[2]]
+  ) => ReturnType<T>;
+} => {
+  return {
+    query: (query, ...variables) =>
+      query(onRequest, variables[0], { includeTypeNames, cacheQueries }) as any,
+    subscribe: (query, onMessage, ...variables) =>
+      query(onSubscribe, onMessage, variables[0], {
+        includeTypeNames,
+        cacheQueries,
+      }) as any,
+  };
+};
 
 export function createQueryArgumentsString(
   fieldKey: string,
@@ -182,9 +196,14 @@ export function isAliasQueryDefinition(
 export function createQueryBodyString(
   QueryDefinitions: QueryDefinitions,
   detectedVariableTypes: DetectedVariableTypes,
+  includeTypeNames: boolean,
   level = 1
 ) {
   let string = " {\n";
+
+  if (includeTypeNames) {
+    string += "  ".repeat(level) + "__typename\n";
+  }
 
   for (const field in QueryDefinitions) {
     const value = QueryDefinitions[field];
@@ -204,7 +223,12 @@ export function createQueryBodyString(
     } else if (isObjectQueryDefinition(value)) {
       string +=
         createQueryArgumentsString(field, value[0], detectedVariableTypes) +
-        createQueryBodyString(value[1], detectedVariableTypes, level + 1);
+        createQueryBodyString(
+          value[1],
+          detectedVariableTypes,
+          includeTypeNames,
+          level + 1
+        );
     } else if (isAliasQueryDefinition(value)) {
       string += `: ${value.$ALIAS}${createQueryArgumentsString(
         value.$ALIAS,
@@ -213,10 +237,16 @@ export function createQueryBodyString(
       )}${createQueryBodyString(
         value.$QUERY[1],
         detectedVariableTypes,
+        includeTypeNames,
         level + 1
       )}`;
     } else {
-      string += createQueryBodyString(value, detectedVariableTypes, level + 1);
+      string += createQueryBodyString(
+        value,
+        detectedVariableTypes,
+        includeTypeNames,
+        level + 1
+      );
     }
   }
 
@@ -247,13 +277,18 @@ function createQueryStringFactory(type: string) {
   return function createQueryStringFactory(
     name: string,
     query: QueryDefinitions,
-    variables?: Record<string, unknown>
+    variables: Record<string, unknown> | undefined,
+    includeTypeNames: boolean
   ) {
     const detectedVariableTypes: Record<
       string,
       { isNonNull: boolean; type: string }
     > = {};
-    const queryBodyString = createQueryBodyString(query, detectedVariableTypes);
+    const queryBodyString = createQueryBodyString(
+      query,
+      detectedVariableTypes,
+      includeTypeNames
+    );
 
     return `${type} ${name} ${
       variables
@@ -277,7 +312,11 @@ export const createMutation =
   ) =>
   (
     request: Requester,
-    variables: V
+    variables: V,
+    {
+      cacheQueries,
+      includeTypeNames,
+    }: { includeTypeNames: boolean; cacheQueries: boolean }
   ): Promise<ResolveQuery<T, RootMutationType>> => {
     const query =
       typeof cb === "function"
@@ -294,7 +333,12 @@ export const createMutation =
         : cb;
 
     return request(
-      createMutationString(name, query, variables ? variables : undefined),
+      createMutationString(
+        name,
+        query,
+        variables ? variables : undefined,
+        includeTypeNames
+      ),
       variables
         ? Object.keys(variables).reduce<Record<string, unknown>>(
             (aggr, key) => {
@@ -318,7 +362,11 @@ export const createQuery =
   ) =>
   (
     request: Requester,
-    variables: V
+    variables: V,
+    {
+      cacheQueries,
+      includeTypeNames,
+    }: { includeTypeNames: boolean; cacheQueries: boolean }
   ): Promise<ResolveQuery<T, RootQueryType>> => {
     const query =
       typeof cb === "function"
@@ -335,7 +383,12 @@ export const createQuery =
         : cb;
 
     return request(
-      createQueryString(name, query, variables ? variables : undefined),
+      createQueryString(
+        name,
+        query,
+        variables ? variables : undefined,
+        includeTypeNames
+      ),
       variables
         ? Object.keys(variables).reduce<Record<string, unknown>>(
             (aggr, key) => {
@@ -360,7 +413,11 @@ export const createSubscription =
   (
     subscribe: Subscriber,
     onMessage: (message: T) => void,
-    variables: V
+    variables: V,
+    {
+      cacheQueries,
+      includeTypeNames,
+    }: { includeTypeNames: boolean; cacheQueries: boolean }
   ): (() => void) => {
     const query =
       typeof cb === "function"
@@ -377,7 +434,12 @@ export const createSubscription =
         : cb;
 
     return subscribe(
-      createSubscriptionString(name, query, variables ? variables : undefined),
+      createSubscriptionString(
+        name,
+        query,
+        variables ? variables : undefined,
+        includeTypeNames
+      ),
       onMessage as any,
       variables
         ? Object.keys(variables).reduce<Record<string, unknown>>(
