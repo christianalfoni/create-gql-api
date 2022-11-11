@@ -111,6 +111,19 @@ export type Subscriber = (
   variables: Record<string, unknown> | void
 ) => () => void;
 
+export type Query = (
+  request: Requester,
+  variables: any,
+  options: { includeTypeNames: boolean; cacheQueries: boolean }
+) => Promise<Record<string, unknown>>;
+
+export type Subscription = (
+  subscribe: Subscriber,
+  onMessage: (message: unknown) => void,
+  variables: any,
+  options: { includeTypeNames: boolean; cacheQueries: boolean }
+) => () => void;
+
 export const createClient = ({
   onRequest,
   onSubscribe,
@@ -122,24 +135,11 @@ export const createClient = ({
   includeTypeNames: boolean;
   cacheQueries: boolean;
 }): {
-  query: <
-    T extends (
-      request: Requester,
-      variables: any,
-      options: { includeTypeNames: boolean; cacheQueries: boolean }
-    ) => Promise<Record<string, unknown>>
-  >(
+  query: <T extends Query>(
     query: T,
     ...variables: Parameters<T>[1] extends void ? [] : [Parameters<T>[1]]
   ) => ReturnType<T>;
-  subscribe: <
-    T extends (
-      subscribe: Subscriber,
-      onMessage: (message: unknown) => void,
-      variables: any,
-      options: { includeTypeNames: boolean; cacheQueries: boolean }
-    ) => () => void
-  >(
+  subscribe: <T extends Subscription>(
     query: T,
     onMessage: Parameters<T>[1],
     ...variables: Parameters<T>[2] extends void ? [] : [Parameters<T>[2]]
