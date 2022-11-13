@@ -5,6 +5,7 @@ import {
   FieldQueryDefinition,
   ObjectQueryDefinition,
   Query,
+  RawQuery,
   QueryDefinition,
   QueryDefinitions,
   Requester,
@@ -47,9 +48,9 @@ export const createClient = ({
 };
 
 export const createQueryUtils = <
-  RootQueryType extends Record<string, unknown>,
-  RootMutationType extends Record<string, unknown>,
-  RootSubscriptionType extends Record<string, unknown>
+  RootQueryType extends RawQuery,
+  RootMutationType extends RawQuery,
+  RootSubscriptionType extends RawQuery
 >(
   argumentsByField: ArgumentsByField
 ) => {
