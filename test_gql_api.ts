@@ -40,4 +40,4 @@ const querySandbox = createQuery("SomeQuery", ({ id }: { id: string }) => ({
 
 const resp = client.query(querySandbox, { id: "new" });
 
-resp.then(console.log);
+resp.then((data) => console.log(data));

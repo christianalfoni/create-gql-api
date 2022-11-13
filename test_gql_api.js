@@ -12449,251 +12449,7 @@ var {
 } = axios_default;
 var axios_default2 = axios_default;
 
-// gql_api.ts
-var argumentsByField = {
-  "collection": {
-    "path": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "teamId": {
-      "isNonNull": false,
-      "type": "ID"
-    }
-  },
-  "collections": {
-    "teamId": {
-      "isNonNull": false,
-      "type": "ID"
-    }
-  },
-  "githubRepos": {
-    "page": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "perPage": {
-      "isNonNull": false,
-      "type": "Int"
-    }
-  },
-  "notifications": {
-    "limit": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "orderBy": {
-      "isNonNull": false,
-      "type": "OrderBy"
-    },
-    "type": {
-      "isNonNull": false,
-      "type": "String"
-    }
-  },
-  "recentBranches": {
-    "contribution": {
-      "isNonNull": false,
-      "type": "Boolean"
-    },
-    "limit": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "teamId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "recentProjects": {
-    "limit": {
-      "isNonNull": false,
-      "type": "Int"
-    }
-  },
-  "recentlyAccessedSandboxes": {
-    "limit": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "teamId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "recentlyUsedTemplates": {
-    "teamId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "sandboxes": {
-    "alwaysOn": {
-      "isNonNull": false,
-      "type": "Boolean"
-    },
-    "authorId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    },
-    "hasOriginalGit": {
-      "isNonNull": false,
-      "type": "Boolean"
-    },
-    "limit": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "orderBy": {
-      "isNonNull": false,
-      "type": "OrderBy"
-    },
-    "showDeleted": {
-      "isNonNull": false,
-      "type": "Boolean"
-    }
-  },
-  "team": {
-    "id": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "templates": {
-    "showAll": {
-      "isNonNull": false,
-      "type": "Boolean"
-    },
-    "teamId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "baseGitSandboxes": {
-    "teamId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "originalGitSandboxes": {
-    "teamId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    }
-  },
-  "album": {
-    "albumId": {
-      "isNonNull": true,
-      "type": "ID"
-    }
-  },
-  "albums": {
-    "username": {
-      "isNonNull": true,
-      "type": "String"
-    }
-  },
-  "git": {
-    "branch": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "path": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "repo": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "username": {
-      "isNonNull": true,
-      "type": "String"
-    }
-  },
-  "githubOrganizationRepos": {
-    "organization": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "page": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "perPage": {
-      "isNonNull": false,
-      "type": "Int"
-    }
-  },
-  "githubRepo": {
-    "owner": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "repo": {
-      "isNonNull": true,
-      "type": "String"
-    }
-  },
-  "project": {
-    "gitProvider": {
-      "isNonNull": false,
-      "type": "GitProvider"
-    },
-    "owner": {
-      "isNonNull": true,
-      "type": "String"
-    },
-    "repo": {
-      "isNonNull": true,
-      "type": "String"
-    }
-  },
-  "sandbox": {
-    "sandboxId": {
-      "isNonNull": true,
-      "type": "ID"
-    }
-  },
-  "teamByToken": {
-    "inviteToken": {
-      "isNonNull": true,
-      "type": "String"
-    }
-  },
-  "comment": {
-    "commentId": {
-      "isNonNull": true,
-      "type": "UUID4"
-    }
-  },
-  "drafts": {
-    "authorId": {
-      "isNonNull": false,
-      "type": "UUID4"
-    },
-    "limit": {
-      "isNonNull": false,
-      "type": "Int"
-    },
-    "orderBy": {
-      "isNonNull": false,
-      "type": "OrderBy"
-    }
-  },
-  "projects": {
-    "syncData": {
-      "isNonNull": false,
-      "type": "Boolean"
-    }
-  },
-  "subscription": {
-    "includeCancelled": {
-      "isNonNull": false,
-      "type": "Boolean"
-    }
-  }
-};
+// src/utils.ts
 var createClient = ({
   onRequest,
   onSubscribe,
@@ -12708,123 +12464,432 @@ var createClient = ({
     })
   };
 };
-function createQueryArgumentsString(fieldKey, args, detectedVariableTypes) {
-  return `(${Object.keys(args).reduce((aggr, key) => {
-    const val = args[key];
-    const isVariable = typeof val === "string" && val[0] === "$";
-    if (isVariable) {
-      detectedVariableTypes[val] = argumentsByField[fieldKey][key];
-    }
-    return aggr.concat(`${key}: ${isVariable ? val : `"${val}"`}`);
-  }, []).join(", ")})`;
-}
-function isObjectQueryDefinition(queryDefinition) {
-  return Array.isArray(queryDefinition) && queryDefinition.length === 2;
-}
-function isFieldQueryDefinition(queryDefinition) {
-  return Array.isArray(queryDefinition) && queryDefinition.length === 1;
-}
-function isAliasQueryDefinition(queryDefinition) {
-  return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
-}
-function createQueryBodyString(QueryDefinitions, detectedVariableTypes, includeTypeNames, level = 1) {
-  let string = " {\n";
-  if (includeTypeNames) {
-    string += "  ".repeat(level) + "__typename\n";
+var createQueryUtils = (argumentsByField) => {
+  function createQueryArgumentsString(fieldKey, args, detectedVariableTypes) {
+    return `(${Object.keys(args).reduce((aggr, key) => {
+      const val = args[key];
+      const isVariable = typeof val === "string" && val[0] === "$";
+      if (isVariable) {
+        detectedVariableTypes[val] = argumentsByField[fieldKey][key];
+      }
+      return aggr.concat(`${key}: ${isVariable ? val : `"${val}"`}`);
+    }, []).join(", ")})`;
   }
-  for (const field in QueryDefinitions) {
-    const value = QueryDefinitions[field];
-    if (value === false) {
-      continue;
-    }
-    string += "  ".repeat(level) + field;
-    if (value === true) {
-      string += "\n";
-    } else if (isFieldQueryDefinition(value)) {
-      string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + "\n";
-    } else if (isObjectQueryDefinition(value)) {
-      string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + createQueryBodyString(
-        value[1],
-        detectedVariableTypes,
-        includeTypeNames,
-        level + 1
-      );
-    } else if (isAliasQueryDefinition(value)) {
-      string += `: ${value.$ALIAS}${createQueryArgumentsString(
-        value.$ALIAS,
-        value.$QUERY[0],
-        detectedVariableTypes
-      )}${createQueryBodyString(
-        value.$QUERY[1],
-        detectedVariableTypes,
-        includeTypeNames,
-        level + 1
-      )}`;
-    } else {
-      string += createQueryBodyString(
-        value,
-        detectedVariableTypes,
-        includeTypeNames,
-        level + 1
-      );
-    }
+  function isObjectQueryDefinition(queryDefinition) {
+    return Array.isArray(queryDefinition) && queryDefinition.length === 2;
   }
-  string += "  ".repeat(level - 1) + "}\n";
-  return string;
-}
-function createVariablesString(variables, detectedVariableTypes) {
-  return Object.keys(variables).map((key) => {
-    let varKey = `$${key}`;
-    let gqlType = detectedVariableTypes[varKey];
-    if (!gqlType) {
-      throw new Error(`Unable to detect variable type for key ${key}`);
+  function isFieldQueryDefinition(queryDefinition) {
+    return Array.isArray(queryDefinition) && queryDefinition.length === 1;
+  }
+  function isAliasQueryDefinition(queryDefinition) {
+    return typeof queryDefinition === "object" && "$ALIAS" in queryDefinition;
+  }
+  function createQueryBodyString(QueryDefinitions, detectedVariableTypes, includeTypeNames, level = 1) {
+    let string = " {\n";
+    if (includeTypeNames) {
+      string += "  ".repeat(level) + "__typename\n";
     }
-    return `${varKey}: ${gqlType.type}${gqlType.isNonNull ? "!" : ""}`;
-  }).join(", ");
-}
-function createQueryStringFactory(type) {
-  return function createQueryStringFactory2(name, query, variables, includeTypeNames) {
-    const detectedVariableTypes = {};
-    const queryBodyString = createQueryBodyString(
-      query,
-      detectedVariableTypes,
+    for (const field in QueryDefinitions) {
+      const value = QueryDefinitions[field];
+      if (value === false) {
+        continue;
+      }
+      string += "  ".repeat(level) + field;
+      if (value === true) {
+        string += "\n";
+      } else if (isFieldQueryDefinition(value)) {
+        string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + "\n";
+      } else if (isObjectQueryDefinition(value)) {
+        string += createQueryArgumentsString(field, value[0], detectedVariableTypes) + createQueryBodyString(
+          value[1],
+          detectedVariableTypes,
+          includeTypeNames,
+          level + 1
+        );
+      } else if (isAliasQueryDefinition(value)) {
+        string += `: ${value.$ALIAS}${createQueryArgumentsString(
+          value.$ALIAS,
+          value.$QUERY[0],
+          detectedVariableTypes
+        )}${createQueryBodyString(
+          value.$QUERY[1],
+          detectedVariableTypes,
+          includeTypeNames,
+          level + 1
+        )}`;
+      } else {
+        string += createQueryBodyString(
+          value,
+          detectedVariableTypes,
+          includeTypeNames,
+          level + 1
+        );
+      }
+    }
+    string += "  ".repeat(level - 1) + "}\n";
+    return string;
+  }
+  function createVariablesString(variables, detectedVariableTypes) {
+    return Object.keys(variables).map((key) => {
+      let varKey = `$${key}`;
+      let gqlType = detectedVariableTypes[varKey];
+      if (!gqlType) {
+        throw new Error(`Unable to detect variable type for key ${key}`);
+      }
+      return `${varKey}: ${gqlType.type}${gqlType.isNonNull ? "!" : ""}`;
+    }).join(", ");
+  }
+  function createQueryStringFactory(type) {
+    return function createQueryStringFactory2(name, query, variables, includeTypeNames) {
+      const detectedVariableTypes = {};
+      const queryBodyString = createQueryBodyString(
+        query,
+        detectedVariableTypes,
+        includeTypeNames
+      );
+      return `${type} ${name} ${variables ? `(${createVariablesString(variables, detectedVariableTypes)})` : ""}${queryBodyString}`;
+    };
+  }
+  const createQueryString = createQueryStringFactory("query");
+  const createMutationString = createQueryStringFactory("mutation");
+  const createSubscriptionString = createQueryStringFactory("subscription");
+  return {
+    createMutation: (name, cb) => (request, variables, {
+      cacheQueries,
       includeTypeNames
-    );
-    return `${type} ${name} ${variables ? `(${createVariablesString(variables, detectedVariableTypes)})` : ""}${queryBodyString}`;
+    }) => {
+      const query = typeof cb === "function" ? cb(
+        Object.keys(variables || {}).reduce(
+          (aggr, key) => {
+            aggr[key] = "$" + key;
+            return aggr;
+          },
+          {}
+        )
+      ) : cb;
+      return request(
+        createMutationString(
+          name,
+          query,
+          variables ? variables : void 0,
+          includeTypeNames
+        ),
+        variables ? Object.keys(variables).reduce(
+          (aggr, key) => {
+            aggr[key] = variables[key];
+            return aggr;
+          },
+          {}
+        ) : {}
+      );
+    },
+    createQuery: (name, cb) => (request, variables, {
+      cacheQueries,
+      includeTypeNames
+    }) => {
+      const query = typeof cb === "function" ? cb(
+        Object.keys(variables || {}).reduce(
+          (aggr, key) => {
+            aggr[key] = "$" + key;
+            return aggr;
+          },
+          {}
+        )
+      ) : cb;
+      return request(
+        createQueryString(
+          name,
+          query,
+          variables ? variables : void 0,
+          includeTypeNames
+        ),
+        variables ? Object.keys(variables).reduce(
+          (aggr, key) => {
+            aggr[key] = variables[key];
+            return aggr;
+          },
+          {}
+        ) : {}
+      );
+    },
+    createSubscription: (name, cb) => (subscribe, onMessage, variables, {
+      cacheQueries,
+      includeTypeNames
+    }) => {
+      const query = typeof cb === "function" ? cb(
+        Object.keys(variables || {}).reduce(
+          (aggr, key) => {
+            aggr[key] = "$" + key;
+            return aggr;
+          },
+          {}
+        )
+      ) : cb;
+      return subscribe(
+        createSubscriptionString(
+          name,
+          query,
+          variables ? variables : void 0,
+          includeTypeNames
+        ),
+        onMessage,
+        variables ? Object.keys(variables).reduce(
+          (aggr, key) => {
+            aggr[key] = variables[key];
+            return aggr;
+          },
+          {}
+        ) : {}
+      );
+    }
   };
-}
-var createQueryString = createQueryStringFactory("query");
-var createMutationString = createQueryStringFactory("mutation");
-var createSubscriptionString = createQueryStringFactory("subscription");
-var createQuery = (name, cb) => (request, variables, {
-  cacheQueries,
-  includeTypeNames
-}) => {
-  const query = typeof cb === "function" ? cb(
-    Object.keys(variables || {}).reduce(
-      (aggr, key) => {
-        aggr[key] = "$" + key;
-        return aggr;
-      },
-      {}
-    )
-  ) : cb;
-  return request(
-    createQueryString(
-      name,
-      query,
-      variables ? variables : void 0,
-      includeTypeNames
-    ),
-    variables ? Object.keys(variables).reduce(
-      (aggr, key) => {
-        aggr[key] = variables[key];
-        return aggr;
-      },
-      {}
-    ) : {}
-  );
 };
+
+// gql_api.ts
+var { createQuery, createMutation, createSubscription } = createQueryUtils({
+  collection: {
+    path: {
+      isNonNull: true,
+      type: "String"
+    },
+    teamId: {
+      isNonNull: false,
+      type: "ID"
+    }
+  },
+  collections: {
+    teamId: {
+      isNonNull: false,
+      type: "ID"
+    }
+  },
+  githubRepos: {
+    page: {
+      isNonNull: false,
+      type: "Int"
+    },
+    perPage: {
+      isNonNull: false,
+      type: "Int"
+    }
+  },
+  notifications: {
+    limit: {
+      isNonNull: false,
+      type: "Int"
+    },
+    orderBy: {
+      isNonNull: false,
+      type: "OrderBy"
+    },
+    type: {
+      isNonNull: false,
+      type: "String"
+    }
+  },
+  recentBranches: {
+    contribution: {
+      isNonNull: false,
+      type: "Boolean"
+    },
+    limit: {
+      isNonNull: false,
+      type: "Int"
+    },
+    teamId: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  recentProjects: {
+    limit: {
+      isNonNull: false,
+      type: "Int"
+    }
+  },
+  recentlyAccessedSandboxes: {
+    limit: {
+      isNonNull: false,
+      type: "Int"
+    },
+    teamId: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  recentlyUsedTemplates: {
+    teamId: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  sandboxes: {
+    alwaysOn: {
+      isNonNull: false,
+      type: "Boolean"
+    },
+    authorId: {
+      isNonNull: false,
+      type: "UUID4"
+    },
+    hasOriginalGit: {
+      isNonNull: false,
+      type: "Boolean"
+    },
+    limit: {
+      isNonNull: false,
+      type: "Int"
+    },
+    orderBy: {
+      isNonNull: false,
+      type: "OrderBy"
+    },
+    showDeleted: {
+      isNonNull: false,
+      type: "Boolean"
+    }
+  },
+  team: {
+    id: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  templates: {
+    showAll: {
+      isNonNull: false,
+      type: "Boolean"
+    },
+    teamId: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  baseGitSandboxes: {
+    teamId: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  originalGitSandboxes: {
+    teamId: {
+      isNonNull: false,
+      type: "UUID4"
+    }
+  },
+  album: {
+    albumId: {
+      isNonNull: true,
+      type: "ID"
+    }
+  },
+  albums: {
+    username: {
+      isNonNull: true,
+      type: "String"
+    }
+  },
+  git: {
+    branch: {
+      isNonNull: true,
+      type: "String"
+    },
+    path: {
+      isNonNull: true,
+      type: "String"
+    },
+    repo: {
+      isNonNull: true,
+      type: "String"
+    },
+    username: {
+      isNonNull: true,
+      type: "String"
+    }
+  },
+  githubOrganizationRepos: {
+    organization: {
+      isNonNull: true,
+      type: "String"
+    },
+    page: {
+      isNonNull: false,
+      type: "Int"
+    },
+    perPage: {
+      isNonNull: false,
+      type: "Int"
+    }
+  },
+  githubRepo: {
+    owner: {
+      isNonNull: true,
+      type: "String"
+    },
+    repo: {
+      isNonNull: true,
+      type: "String"
+    }
+  },
+  project: {
+    gitProvider: {
+      isNonNull: false,
+      type: "GitProvider"
+    },
+    owner: {
+      isNonNull: true,
+      type: "String"
+    },
+    repo: {
+      isNonNull: true,
+      type: "String"
+    }
+  },
+  sandbox: {
+    sandboxId: {
+      isNonNull: true,
+      type: "ID"
+    }
+  },
+  teamByToken: {
+    inviteToken: {
+      isNonNull: true,
+      type: "String"
+    }
+  },
+  comment: {
+    commentId: {
+      isNonNull: true,
+      type: "UUID4"
+    }
+  },
+  drafts: {
+    authorId: {
+      isNonNull: false,
+      type: "UUID4"
+    },
+    limit: {
+      isNonNull: false,
+      type: "Int"
+    },
+    orderBy: {
+      isNonNull: false,
+      type: "OrderBy"
+    }
+  },
+  projects: {
+    syncData: {
+      isNonNull: false,
+      type: "Boolean"
+    }
+  },
+  subscription: {
+    includeCancelled: {
+      isNonNull: false,
+      type: "Boolean"
+    }
+  }
+});
 
 // test_gql_api.ts
 var client = createClient({
@@ -12861,7 +12926,7 @@ var querySandbox = createQuery("SomeQuery", ({ id }) => ({
   ]
 }));
 var resp = client.query(querySandbox, { id: "new" });
-resp.then(console.log);
+resp.then((data) => console.log(data));
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
