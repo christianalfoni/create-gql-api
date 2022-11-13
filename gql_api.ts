@@ -1,4 +1,5 @@
-import { createClient, createQueryUtils, ListQuery, FieldQuery } from "./src";
+import { createClient, createQueryUtils } from "./src";
+import type { ListQuery, FieldQuery } from "./src";
 export type Album = {
   id: string;
   sandboxes: Sandbox[];

@@ -27,7 +27,7 @@ export type FieldQueryDefinition = [Record<string, unknown>, ...never[]];
 
 export type AliasQueryDefinition = {
   $ALIAS: string;
-  $QUERY: ObjectQueryDefinition;
+  $QUERY: ObjectQueryDefinition | FieldQueryDefinition;
 };
 
 export type QueryDefinition =
@@ -38,7 +38,7 @@ export type QueryDefinition =
   | QueryDefinitions;
 
 export type QueryDefinitions = {
-  [key: string]: QueryDefinition;
+  [key: string]: QueryDefinition | undefined;
 };
 
 export type ResolveQueryDefinitions<T extends Record<string, unknown>> =

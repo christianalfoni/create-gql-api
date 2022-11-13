@@ -46,7 +46,57 @@ export const createClient = ({
   };
 };
 
-export const createQueryUtils = <
+export const createQueryUtils: <
+  RootQueryType extends Record<string, unknown>,
+  RootMutationType extends Record<string, unknown>,
+  RootSubscriptionType extends Record<string, unknown>
+>(
+  argumentsByField: ArgumentsByField
+) => {
+  createQuery: <
+    V extends Record<string, unknown> | void,
+    T extends ResolveQueryDefinitions<RootQueryType>
+  >(
+    name: string,
+    cb: T | ((variables: V) => T)
+  ) => (
+    request: Requester,
+    variables: V,
+    {
+      cacheQueries,
+      includeTypeNames,
+    }: { includeTypeNames: boolean; cacheQueries: boolean }
+  ) => Promise<ResolveQuery<T, RootQueryType>>;
+  createMutation: <
+    V extends Record<string, unknown> | void,
+    T extends ResolveQueryDefinitions<RootMutationType>
+  >(
+    name: string,
+    cb: T | ((variables: V) => T)
+  ) => (
+    request: Requester,
+    variables: V,
+    {
+      cacheQueries,
+      includeTypeNames,
+    }: { includeTypeNames: boolean; cacheQueries: boolean }
+  ) => Promise<ResolveQuery<T, RootMutationType>>;
+  createSubscription: <
+    V extends Record<string, unknown> | void,
+    T extends ResolveQueryDefinitions<RootSubscriptionType>
+  >(
+    name: string,
+    cb: T | ((variables: V) => T)
+  ) => (
+    subscribe: Subscriber,
+    onMessage: (message: T) => void,
+    variables: V,
+    {
+      cacheQueries,
+      includeTypeNames,
+    }: { includeTypeNames: boolean; cacheQueries: boolean }
+  ) => () => void;
+} = <
   RootQueryType extends Record<string, unknown>,
   RootMutationType extends Record<string, unknown>,
   RootSubscriptionType extends Record<string, unknown>
@@ -110,6 +160,11 @@ export const createQueryUtils = <
       }
 
       string += "  ".repeat(level) + field;
+
+      if (value === undefined) {
+        // This can not really happen, but due to typing it needs to be handled
+        throw new Error("Got an undefined, that should not be possible!");
+      }
 
       if (value === true) {
         string += "\n";
@@ -201,21 +256,8 @@ export const createQueryUtils = <
 
   return {
     createMutation:
-      <
-        V extends Record<string, unknown> | void,
-        T extends ResolveQueryDefinitions<RootMutationType>
-      >(
-        name: string,
-        cb: T | ((variables: V) => T)
-      ) =>
-      (
-        request: Requester,
-        variables: V,
-        {
-          cacheQueries,
-          includeTypeNames,
-        }: { includeTypeNames: boolean; cacheQueries: boolean }
-      ): Promise<ResolveQuery<T, RootMutationType>> => {
+      (name, cb) =>
+      (request, variables, { cacheQueries, includeTypeNames }) => {
         const query =
           typeof cb === "function"
             ? cb(
@@ -226,7 +268,7 @@ export const createQueryUtils = <
                     return aggr;
                   },
                   {}
-                ) as V
+                ) as any
               )
             : cb;
 
@@ -247,25 +289,12 @@ export const createQueryUtils = <
                 {}
               )
             : {}
-        ) as Promise<ResolveQuery<T, RootMutationType>>;
+        ) as any;
       },
 
     createQuery:
-      <
-        V extends Record<string, unknown> | void,
-        T extends ResolveQueryDefinitions<RootQueryType>
-      >(
-        name: string,
-        cb: T | ((variables: V) => T)
-      ) =>
-      (
-        request: Requester,
-        variables: V,
-        {
-          cacheQueries,
-          includeTypeNames,
-        }: { includeTypeNames: boolean; cacheQueries: boolean }
-      ): Promise<ResolveQuery<T, RootQueryType>> => {
+      (name, cb) =>
+      (request, variables, { cacheQueries, includeTypeNames }) => {
         const query =
           typeof cb === "function"
             ? cb(
@@ -276,7 +305,7 @@ export const createQueryUtils = <
                     return aggr;
                   },
                   {}
-                ) as V
+                ) as any
               )
             : cb;
 
@@ -297,26 +326,12 @@ export const createQueryUtils = <
                 {}
               )
             : {}
-        ) as Promise<ResolveQuery<T, RootQueryType>>;
+        ) as any;
       },
 
     createSubscription:
-      <
-        V extends Record<string, unknown> | void,
-        T extends ResolveQueryDefinitions<RootSubscriptionType>
-      >(
-        name: string,
-        cb: T | ((variables: V) => T)
-      ) =>
-      (
-        subscribe: Subscriber,
-        onMessage: (message: T) => void,
-        variables: V,
-        {
-          cacheQueries,
-          includeTypeNames,
-        }: { includeTypeNames: boolean; cacheQueries: boolean }
-      ): (() => void) => {
+      (name, cb) =>
+      (subscribe, onMessage, variables, { cacheQueries, includeTypeNames }) => {
         const query =
           typeof cb === "function"
             ? cb(
@@ -327,7 +342,7 @@ export const createQueryUtils = <
                     return aggr;
                   },
                   {}
-                ) as V
+                ) as any
               )
             : cb;
 
