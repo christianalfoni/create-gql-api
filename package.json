@@ -1,8 +1,8 @@
 {
   "name": "create-gql-api",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Simplify GQL typing and consumption",
-  "main": "index.js",
+  "main": "dist/index.js",
   "bin": "bin/index.js",
   "dependencies": {
     "get-graphql-schema": "^2.1.2",
@@ -10,12 +10,15 @@
     "ts-jest": "^29.0.3"
   },
   "files": [
-    "bin"
+    "bin",
+    "dist"
   ],
   "scripts": {
     "dev": "yarn build && ./bin/index.js https://codesandbox.stream/api/graphql gql_api.ts",
-    "build": "esbuild src/index.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=bin/index.js && cp src/api.ts bin/api.ts",
-    "test_gql": "yarn dev && esbuild test_gql_api.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=test_gql_api.js && node test_gql_api.js"
+    "build": "yarn build:bin && yarn build:lib",
+    "build:bin": "esbuild src/bin.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=bin/index.js",
+    "build:lib": "esbuild src/index.ts --bundle --outfile=dist/index.js",
+    "test_gql": "esbuild test_gql_api.ts --bundle --platform=node --external:graphql --external:get-graphql-schema --outfile=test_gql_api.js && node test_gql_api.js"
   },
   "repository": {
     "type": "git",

@@ -1,17 +1,8 @@
 import * as GQL from "graphql";
 import { getNamedTypeNode, isListTypeNode, isNonNullType } from "./schemaUtils";
+import { ArgumentsByField } from "./types";
 
-export const argumentsByField: Record<
-  string,
-  Record<
-    string,
-    {
-      isNonNull: boolean;
-      type: string;
-      defaultValue?: string;
-    }
-  >
-> = {};
+export const argumentsByField: ArgumentsByField = {};
 
 export function createValueType(value: string) {
   if (
