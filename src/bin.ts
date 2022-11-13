@@ -21,7 +21,7 @@ const { createQuery, createMutation, createSubscription } = createQueryUtils<Roo
     argumentsByField,
     null,
     2
-  )})
-export { createQuery, createMutation, createSubscription, createClient }  
+  )});
+export { createQuery, createMutation, createSubscription, createClient, Query };
 `
 );
