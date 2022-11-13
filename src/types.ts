@@ -14,7 +14,7 @@ export type FieldQuery<A extends Record<string, unknown>, T> = T & { __: A };
 
 export type ListQuery<
   A extends Record<string, unknown>,
-  T extends Query
+  T extends Record<string, unknown>
 > = Array<T> & { __: A };
 
 export type ObjectQueryDefinition = [
@@ -30,16 +30,6 @@ export type AliasQueryDefinition = {
   $QUERY: ObjectQueryDefinition | FieldQueryDefinition;
 };
 
-export type RawQuery = {
-  [key: string]:
-    | boolean
-    | string
-    | null
-    | number
-    | ListQuery<any, any>
-    | FieldQuery<any, any>;
-};
-
 export type QueryDefinition =
   | boolean
   | ObjectQueryDefinition
@@ -48,7 +38,7 @@ export type QueryDefinition =
   | QueryDefinitions;
 
 export type QueryDefinitions = {
-  [key: string]: QueryDefinition;
+  [key: string]: QueryDefinition | undefined;
 };
 
 export type ResolveQueryDefinitions<T extends Record<string, unknown>> =

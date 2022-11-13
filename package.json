@@ -1,9 +1,10 @@
 {
   "name": "create-gql-api",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Simplify GQL typing and consumption",
   "main": "dist/index.js",
   "bin": "bin/index.js",
+  "typings": "dist/index.d.ts",
   "dependencies": {
     "get-graphql-schema": "^2.1.2",
     "graphql": "^16.6.0",
