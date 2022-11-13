@@ -13,7 +13,8 @@ const schema = GQL.parse(String(schemaString));
 
 fs.writeFileSync(
   path.join(process.cwd(), out),
-  `import { createClient, createQueryUtils, ListQuery, FieldQuery } from 'create-gql-api';
+  `import { createClient, createQueryUtils } from 'create-gql-api';
+import type { ListQuery, FieldQuery } from 'create-gql-api';
 ${createTypes(schema.definitions)}
 const { createQuery, createMutation, createSubscription } = createQueryUtils<RootQueryType, RootMutationType, RootSubscriptionType>(${JSON.stringify(
     // This is a global which is populated by "createTypes"
