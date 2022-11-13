@@ -1,6 +1,6 @@
 {
   "name": "create-gql-api",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Simplify GQL typing and consumption",
   "main": "dist/index.js",
   "bin": "bin/index.js",

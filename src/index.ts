@@ -1,2 +1,2 @@
 export { createClient, createQueryUtils } from "./utils";
-export { ListQuery, FieldQuery } from "./types";
+export { Query, ListQuery, FieldQuery } from "./types";
