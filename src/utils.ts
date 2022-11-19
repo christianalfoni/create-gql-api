@@ -148,7 +148,7 @@ export const createQueryUtils: <
   ) {
     let string = " {\n";
 
-    if (includeTypeNames) {
+    if (level > 1 && includeTypeNames) {
       string +=
         "  ".repeat(level) +
         "__typename\n" +
@@ -229,7 +229,7 @@ export const createQueryUtils: <
   }
 
   function createQueryStringFactory(type: string) {
-    return function createQueryStringFactory(
+    return function createQueryString(
       name: string,
       query: QueryDefinitions,
       variables: Record<string, unknown> | undefined,
