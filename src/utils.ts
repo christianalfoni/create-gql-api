@@ -149,7 +149,10 @@ export const createQueryUtils: <
     let string = " {\n";
 
     if (includeTypeNames) {
-      string += "  ".repeat(level) + "__typename\n";
+      string +=
+        "  ".repeat(level) +
+        "__typename\n" +
+        ("id" in QueryDefinitions ? "" : "id\n");
     }
 
     for (const field in QueryDefinitions) {
