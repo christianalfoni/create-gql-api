@@ -4,27 +4,22 @@ import { ArgumentsByField } from "./types";
 
 export const argumentsByField: ArgumentsByField = {};
 
+const nativeTypes = {
+  String: "string",
+  UUID4: "string",
+  ID: "string",
+  DateTime: "string",
+  NaiveDateTime: "string",
+  Base64: "string",
+
+  Boolean: "boolean",
+
+  Int: "number",
+  Float: "number",
+};
+
 export function createValueType(value: string) {
-  if (
-    value === "String" ||
-    value === "UUID4" ||
-    value === "ID" ||
-    value === "DateTime" ||
-    value === "NaiveDateTime" ||
-    value === "Base64"
-  ) {
-    return "string";
-  }
-
-  if (value === "Boolean") {
-    return "boolean";
-  }
-
-  if (value === "Int" || value === "Float") {
-    return "number";
-  }
-
-  return value;
+  return nativeTypes[value] || value;
 }
 
 export function createInputValues(
@@ -80,10 +75,12 @@ export function createObjectTypeKey(
     )}, ${createValueType(getNamedTypeNode(field.type).name.value)}>`;
   }
 
-  if (isList) {
-    return `${field.name.value}: ${createValueType(
-      getNamedTypeNode(field.type).name.value
-    )}[]`;
+  const typedNameNode = getNamedTypeNode(field.type);
+
+  if (isList && !(typedNameNode.name.value in nativeTypes)) {
+    return `${field.name.value}: ListField<${createValueType(
+      typedNameNode.name.value
+    )}>`;
   }
 
   if (field.arguments && field.arguments.length) {
@@ -91,12 +88,12 @@ export function createObjectTypeKey(
       name,
       field.name.value,
       field.arguments
-    )}, ${createValueType(getNamedTypeNode(field.type).name.value)}>`;
+    )}, ${createValueType(typedNameNode.name.value)}>`;
   }
 
-  return `${field.name.value}: ${createValueType(
-    getNamedTypeNode(field.type).name.value
-  )}`;
+  return `${field.name.value}: ${createValueType(typedNameNode.name.value)}${
+    isList ? "[]" : ""
+  }`;
 }
 
 export function createObjectType(definition: GQL.ObjectTypeDefinitionNode) {
