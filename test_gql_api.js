@@ -12486,8 +12486,8 @@ var createQueryUtils = (argumentsByField) => {
   }
   function createQueryBodyString(QueryDefinitions, detectedVariableTypes, includeTypeNames, level = 1) {
     let string = " {\n";
-    if (includeTypeNames) {
-      string += "  ".repeat(level) + "__typename\n";
+    if (level > 1 && includeTypeNames) {
+      string += "  ".repeat(level) + "__typename\n" + ("id" in QueryDefinitions ? "" : "id\n");
     }
     for (const field in QueryDefinitions) {
       const value = QueryDefinitions[field];
@@ -12495,6 +12495,9 @@ var createQueryUtils = (argumentsByField) => {
         continue;
       }
       string += "  ".repeat(level) + field;
+      if (value === void 0) {
+        throw new Error("Got an undefined, that should not be possible!");
+      }
       if (value === true) {
         string += "\n";
       } else if (isFieldQueryDefinition(value)) {
@@ -12540,7 +12543,7 @@ var createQueryUtils = (argumentsByField) => {
     }).join(", ");
   }
   function createQueryStringFactory(type) {
-    return function createQueryStringFactory2(name, query, variables, includeTypeNames) {
+    return function createQueryString2(name, query, variables, includeTypeNames) {
       const detectedVariableTypes = {};
       const queryBodyString = createQueryBodyString(
         query,
@@ -12554,10 +12557,7 @@ var createQueryUtils = (argumentsByField) => {
   const createMutationString = createQueryStringFactory("mutation");
   const createSubscriptionString = createQueryStringFactory("subscription");
   return {
-    createMutation: (name, cb) => (request, variables, {
-      cacheQueries,
-      includeTypeNames
-    }) => {
+    createMutation: (name, cb) => (request, variables, { cacheQueries, includeTypeNames }) => {
       const query = typeof cb === "function" ? cb(
         Object.keys(variables || {}).reduce(
           (aggr, key) => {
@@ -12583,10 +12583,7 @@ var createQueryUtils = (argumentsByField) => {
         ) : {}
       );
     },
-    createQuery: (name, cb) => (request, variables, {
-      cacheQueries,
-      includeTypeNames
-    }) => {
+    createQuery: (name, cb) => (request, variables, { cacheQueries, includeTypeNames }) => {
       const query = typeof cb === "function" ? cb(
         Object.keys(variables || {}).reduce(
           (aggr, key) => {
@@ -12612,10 +12609,7 @@ var createQueryUtils = (argumentsByField) => {
         ) : {}
       );
     },
-    createSubscription: (name, cb) => (subscribe, onMessage, variables, {
-      cacheQueries,
-      includeTypeNames
-    }) => {
+    createSubscription: (name, cb) => (subscribe, onMessage, variables, { cacheQueries, includeTypeNames }) => {
       const query = typeof cb === "function" ? cb(
         Object.keys(variables || {}).reduce(
           (aggr, key) => {
@@ -12843,6 +12837,10 @@ var { createQuery, createMutation, createSubscription } = createQueryUtils({
     repo: {
       isNonNull: true,
       type: "String"
+    },
+    team: {
+      isNonNull: false,
+      type: "ID"
     }
   },
   sandbox: {
@@ -12917,10 +12915,8 @@ var querySandbox = createQuery("SomeQuery", ({ id }) => ({
   sandbox: [
     { sandboxId: id },
     {
-      title: true,
-      description: true,
-      author: {
-        name: true
+      collaborators: {
+        id: true
       }
     }
   ]

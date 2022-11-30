@@ -12,6 +12,8 @@ export type ArgumentsByField = Record<
 
 export type FieldQuery<A extends Record<string, unknown>, T> = T & { __: A };
 
+export type ListField<T extends Record<string, unknown>> = T[];
+
 export type ListQuery<
   A extends Record<string, unknown>,
   T extends Record<string, unknown>
@@ -43,7 +45,9 @@ export type QueryDefinitions = {
 
 export type ResolveQueryDefinitions<T extends Record<string, unknown>> =
   | {
-      [K in keyof T]?: T[K] extends ListQuery<infer A, infer B>
+      [K in keyof T]?: T[K] extends ListField<infer A>
+        ? ResolveQueryDefinitions<A>
+        : T[K] extends ListQuery<infer A, infer B>
         ? [A, ResolveQueryDefinitions<B>, ...never[]]
         : T[K] extends FieldQuery<infer A, infer B>
         ? B extends Record<string, unknown>

@@ -1,8 +1,8 @@
 import { createClient, createQueryUtils } from "./src";
-import type { ListQuery, FieldQuery } from "./src";
+import type { ListQuery, FieldQuery, Query, ListField } from "./src";
 export type Album = {
   id: string;
-  sandboxes: Sandbox[];
+  sandboxes: ListField<Sandbox>;
   title: string;
 };
 export enum Authorization {
@@ -34,7 +34,7 @@ export type Bookmarked = {
 export type BookmarkEntity = Team | User;
 
 export type Branch = {
-  connections: Connection[];
+  connections: ListField<Connection>;
   contribution: boolean;
   id: string;
   lastAccessedAt: string;
@@ -43,13 +43,13 @@ export type Branch = {
   owner: User;
   poolSize: number;
   project: Project;
-  pullRequests: PullRequest[];
+  pullRequests: ListField<PullRequest>;
   status: Status;
   upstream: boolean;
 };
 export type BranchConnections = {
   branchId: string;
-  connections: Connection[];
+  connections: ListField<Connection>;
 };
 export type BranchLastCommit = {
   branchId: string;
@@ -85,21 +85,21 @@ export type Collection = {
   id: string;
   path: string;
   sandboxCount: number;
-  sandboxes: Sandbox[];
+  sandboxes: ListField<Sandbox>;
   team: Team;
   teamId: string;
   user: User;
 };
 export type Comment = {
   anchorReference: Reference;
-  comments: Comment[];
+  comments: ListField<Comment>;
   content: string;
   id: string;
   insertedAt: string;
   isRead: boolean;
   isResolved: boolean;
   parentComment: Comment;
-  references: Reference[];
+  references: ListField<Reference>;
   replyCount: number;
   sandbox: Sandbox;
   updatedAt: string;
@@ -114,9 +114,9 @@ export type Connection = {
 };
 export type CurrentUser = {
   betaAccess: boolean;
-  betaSandboxes: SandboxV2[];
-  bookmarkedTemplates: Template[];
-  collaboratorSandboxes: Sandbox[];
+  betaSandboxes: ListField<SandboxV2>;
+  bookmarkedTemplates: ListField<Template>;
+  collaboratorSandboxes: ListField<Sandbox>;
   collection: FieldQuery<
     {
       path: string;
@@ -132,8 +132,8 @@ export type CurrentUser = {
   >;
   deletionRequested: boolean;
   email: string;
-  featureFlags: FeatureFlag[];
-  githubOrganizations: GithubOrganization[];
+  featureFlags: ListField<FeatureFlag>;
+  githubOrganizations: ListField<GithubOrganization>;
   githubProfile: GithubProfile;
   githubRepos: ListQuery<
     {
@@ -143,7 +143,7 @@ export type CurrentUser = {
     GithubRepo
   >;
   id: string;
-  likedSandboxes: Sandbox[];
+  likedSandboxes: ListField<Sandbox>;
   name: string;
   notificationPreferences: NotificationPreferences;
   notifications: ListQuery<
@@ -198,7 +198,7 @@ export type CurrentUser = {
     },
     Team
   >;
-  teams: Team[];
+  teams: ListField<Team>;
   templates: ListQuery<
     {
       showAll: boolean;
@@ -207,7 +207,7 @@ export type CurrentUser = {
     Template
   >;
   username: string;
-  workspaces: Team[];
+  workspaces: ListField<Team>;
 };
 export enum Direction {
   ASC = "ASC",
@@ -227,7 +227,7 @@ export type FeatureFlag = {
   enabled: boolean;
   id: string;
   name: string;
-  teams: Team[];
+  teams: ListField<Team>;
 };
 export type Git = {
   baseGitSandboxes: ListQuery<
@@ -392,20 +392,22 @@ export type PrivateRegistry = {
 };
 export type Project = {
   appInstalled: boolean;
-  availableEnvironments: Environment[];
-  branches: Branch[];
-  connections: Connection[];
+  availableEnvironments: ListField<Environment>;
+  branches: ListField<Branch>;
+  connections: ListField<Connection>;
   defaultBranch: Branch;
   description: string;
   environment: Environment;
+  id: string;
   lastAccessedAt: string;
   lastCommit: LastCommit;
   owner: string;
   private: boolean;
-  pullRequests: PullRequest[];
+  pullRequests: ListField<PullRequest>;
   repo: string;
   repository: Repository;
-  teams: Team[];
+  team: Team;
+  teams: ListField<Team>;
 };
 export type ProSubscription = {
   active: boolean;
@@ -586,14 +588,6 @@ export type RootMutationType = {
     },
     Comment
   >;
-  createFeatureFlag: FieldQuery<
-    {
-      description: string;
-      enabled: boolean;
-      name: string;
-    },
-    FeatureFlag
-  >;
   createOrUpdatePrivateNpmRegistry: FieldQuery<
     {
       authType: AuthType;
@@ -674,37 +668,20 @@ export type RootMutationType = {
     },
     string
   >;
-  disableFeatureFlag: FieldQuery<
-    {
-      name: string;
-    },
-    FeatureFlag
-  >;
-  disableFeatureFlagForTeam: FieldQuery<
-    {
-      featureFlagId: string;
-      teamId: string;
-    },
-    TeamsFeatureFlag
-  >;
-  enableFeatureFlag: FieldQuery<
-    {
-      name: string;
-    },
-    FeatureFlag
-  >;
-  enableFeatureFlagForTeam: FieldQuery<
-    {
-      featureFlagId: string;
-      teamId: string;
-    },
-    TeamsFeatureFlag
-  >;
   enableTeamBetaAccess: FieldQuery<
     {
       teamId: string;
     },
     Team
+  >;
+  importProject: FieldQuery<
+    {
+      name: string;
+      owner: string;
+      provider: GitProvider;
+      team: string;
+    },
+    Project
   >;
   inviteToTeam: FieldQuery<
     {
@@ -1020,8 +997,8 @@ export type RootQueryType = {
     },
     Album
   >;
-  curatedAlbums: Album[];
-  featureFlags: FeatureFlag[];
+  curatedAlbums: ListField<Album>;
+  featureFlags: ListField<FeatureFlag>;
   git: FieldQuery<
     {
       branch: string;
@@ -1052,6 +1029,7 @@ export type RootQueryType = {
       gitProvider: GitProvider;
       owner: string;
       repo: string;
+      team: string;
     },
     Project
   >;
@@ -1168,7 +1146,7 @@ export type Sandbox = {
   authorId: string;
   authorization: Authorization;
   baseGit: Git;
-  collaborators: Collaborator[];
+  collaborators: ListField<Collaborator>;
   collection: Collection;
   comment: FieldQuery<
     {
@@ -1176,7 +1154,7 @@ export type Sandbox = {
     },
     Comment
   >;
-  comments: Comment[];
+  comments: ListField<Comment>;
   customTemplate: Template;
   description: string;
   forkCount: number;
@@ -1184,7 +1162,7 @@ export type Sandbox = {
   git: Git;
   id: string;
   insertedAt: string;
-  invitations: Invitation[];
+  invitations: ListField<Invitation>;
   isFrozen: boolean;
   isSse: boolean;
   isV2: boolean;
@@ -1211,7 +1189,7 @@ export type SandboxProtectionSettings = {
 export type SandboxV2 = {
   alias: string;
   authorization: Authorization;
-  collaborators: Collaborator[];
+  collaborators: ListField<Collaborator>;
   gitv2: GitV2;
   id: string;
   insertedAt: string;
@@ -1262,8 +1240,8 @@ export enum SubscriptionType {
 export type Team = {
   avatarUrl: string;
   beta: boolean;
-  bookmarkedTemplates: Template[];
-  collections: Collection[];
+  bookmarkedTemplates: ListField<Template>;
+  collections: ListField<Collection>;
   creatorId: string;
   description: string;
   drafts: ListQuery<
@@ -1276,7 +1254,7 @@ export type Team = {
   >;
   id: string;
   inviteToken: string;
-  invitees: User[];
+  invitees: ListField<User>;
   joinedPilotAt: string;
   limits: TeamLimits;
   name: string;
@@ -1306,10 +1284,10 @@ export type Team = {
     },
     ProSubscription
   >;
-  templates: Template[];
+  templates: ListField<Template>;
   usage: TeamUsage;
-  userAuthorizations: UserAuthorization[];
-  users: User[];
+  userAuthorizations: ListField<UserAuthorization>;
+  users: ListField<User>;
 };
 export type TeamLimits = {
   maxEditors: number;
@@ -1323,11 +1301,6 @@ export enum TeamMemberAuthorization {
   READ = "READ",
   WRITE = "WRITE",
 }
-export type TeamsFeatureFlag = {
-  enabledForTeam: boolean;
-  featureFlagId: string;
-  teamId: string;
-};
 export type TeamUsage = {
   editorsQuantity: number;
   privateProjectsQuantity: number;
@@ -1336,7 +1309,7 @@ export type TeamUsage = {
   publicSandboxesQuantity: number;
 };
 export type Template = {
-  bookmarked: Bookmarked[];
+  bookmarked: ListField<Bookmarked>;
   color: string;
   description: string;
   iconUrl: string;
@@ -1421,7 +1394,6 @@ export type ObjectTypes = {
   StatusCommitCounts: StatusCommitCounts;
   Team: Team;
   TeamLimits: TeamLimits;
-  TeamsFeatureFlag: TeamsFeatureFlag;
   TeamUsage: TeamUsage;
   Template: Template;
   User: User;
@@ -1631,6 +1603,10 @@ const { createQuery, createMutation, createSubscription } = createQueryUtils<
       isNonNull: true,
       type: "String",
     },
+    team: {
+      isNonNull: false,
+      type: "ID",
+    },
   },
   sandbox: {
     sandboxId: {
@@ -1677,4 +1653,4 @@ const { createQuery, createMutation, createSubscription } = createQueryUtils<
     },
   },
 });
-export { createQuery, createMutation, createSubscription, createClient };
+export { createQuery, createMutation, createSubscription, createClient, Query };

@@ -29,10 +29,8 @@ const querySandbox = createQuery("SomeQuery", ({ id }: { id: string }) => ({
   sandbox: [
     { sandboxId: id },
     {
-      title: true,
-      description: true,
-      author: {
-        name: true,
+      collaborators: {
+        id: true,
       },
     },
   ],
