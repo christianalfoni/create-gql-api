@@ -42,15 +42,17 @@ export function createInputValues(
     argumentsByField[field] = {};
 
     for (const arg of args) {
+      const isNonNull = isNonNullType(arg.type);
+
       argumentsByField[field][arg.name.value] = {
-        isNonNull: isNonNullType(arg.type),
+        isNonNull,
         type: getNamedTypeNode(arg.type).name.value,
         // Implement default value
       };
 
-      string += `    ${arg.name.value}: ${createValueType(
-        getNamedTypeNode(arg.type).name.value
-      )}`;
+      string += `    ${arg.name.value}${
+        isNonNull ? "" : "?"
+      }: ${createValueType(getNamedTypeNode(arg.type).name.value)}`;
 
       if (arg !== args[args.length - 1]) {
         string += "\n";

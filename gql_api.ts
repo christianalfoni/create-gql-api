@@ -41,7 +41,6 @@ export type Branch = {
   lastCommit: LastCommit;
   name: string;
   owner: User;
-  poolSize: number;
   project: Project;
   pullRequests: ListField<PullRequest>;
   status: Status;
@@ -114,19 +113,18 @@ export type Connection = {
 };
 export type CurrentUser = {
   betaAccess: boolean;
-  betaSandboxes: ListField<SandboxV2>;
   bookmarkedTemplates: ListField<Template>;
   collaboratorSandboxes: ListField<Sandbox>;
   collection: FieldQuery<
     {
       path: string;
-      teamId: string;
+      teamId?: string;
     },
     Collection
   >;
   collections: ListQuery<
     {
-      teamId: string;
+      teamId?: string;
     },
     Collection
   >;
@@ -137,8 +135,8 @@ export type CurrentUser = {
   githubProfile: GithubProfile;
   githubRepos: ListQuery<
     {
-      page: number;
-      perPage: number;
+      page?: number;
+      perPage?: number;
     },
     GithubRepo
   >;
@@ -148,9 +146,9 @@ export type CurrentUser = {
   notificationPreferences: NotificationPreferences;
   notifications: ListQuery<
     {
-      limit: number;
-      orderBy: OrderBy;
-      type: string;
+      limit?: number;
+      orderBy?: OrderBy;
+      type?: string;
     },
     Notification
   >;
@@ -158,51 +156,51 @@ export type CurrentUser = {
   provider: ProviderName;
   recentBranches: ListQuery<
     {
-      contribution: boolean;
-      limit: number;
-      teamId: string;
+      contribution?: boolean;
+      limit?: number;
+      teamId?: string;
     },
     Branch
   >;
   recentProjects: ListQuery<
     {
-      limit: number;
+      limit?: number;
     },
     Project
   >;
   recentlyAccessedSandboxes: ListQuery<
     {
-      limit: number;
-      teamId: string;
+      limit?: number;
+      teamId?: string;
     },
     Sandbox
   >;
   recentlyUsedTemplates: ListQuery<
     {
-      teamId: string;
+      teamId?: string;
     },
     Template
   >;
   sandboxes: ListQuery<
     {
-      hasOriginalGit: boolean;
-      limit: number;
-      orderBy: OrderBy;
-      showDeleted: boolean;
+      hasOriginalGit?: boolean;
+      limit?: number;
+      orderBy?: OrderBy;
+      showDeleted?: boolean;
     },
     Sandbox
   >;
   team: FieldQuery<
     {
-      id: string;
+      id?: string;
     },
     Team
   >;
   teams: ListField<Team>;
   templates: ListQuery<
     {
-      showAll: boolean;
-      teamId: string;
+      showAll?: boolean;
+      teamId?: string;
     },
     Template
   >;
@@ -213,15 +211,6 @@ export enum Direction {
   ASC = "ASC",
   DESC = "DESC",
 }
-export type Environment = {
-  description: string;
-  id: string;
-  limitCpu: number;
-  limitMemory: string;
-  limitStorage: string;
-  name: string;
-  order: number;
-};
 export type FeatureFlag = {
   description: string;
   enabled: boolean;
@@ -232,7 +221,7 @@ export type FeatureFlag = {
 export type Git = {
   baseGitSandboxes: ListQuery<
     {
-      teamId: string;
+      teamId?: string;
     },
     Sandbox
   >;
@@ -241,7 +230,7 @@ export type Git = {
   id: string;
   originalGitSandboxes: ListQuery<
     {
-      teamId: string;
+      teamId?: string;
     },
     Sandbox
   >;
@@ -302,11 +291,6 @@ export type GitHubRepository = {
 export enum GitProvider {
   GITHUB = "GITHUB",
 }
-export type GitV2 = {
-  branch: string;
-  owner: string;
-  repo: string;
-};
 export type ImageReference = {
   fileName: string;
   resolution: number;
@@ -339,6 +323,12 @@ export type LastCommit = {
   sha: string;
   timestamp: string;
   user: User;
+};
+export type Limits = {
+  personalFree: TeamLimits;
+  personalPro: TeamLimits;
+  teamFree: TeamLimits;
+  teamPro: TeamLimits;
 };
 export type MemberAuthorization = {
   authorization: TeamMemberAuthorization;
@@ -392,12 +382,11 @@ export type PrivateRegistry = {
 };
 export type Project = {
   appInstalled: boolean;
-  availableEnvironments: ListField<Environment>;
+  branchCount: number;
   branches: ListField<Branch>;
   connections: ListField<Connection>;
   defaultBranch: Branch;
   description: string;
-  environment: Environment;
   id: string;
   lastAccessedAt: string;
   lastCommit: LastCommit;
@@ -418,6 +407,7 @@ export type ProSubscription = {
   id: string;
   nextBillDate: string;
   origin: SubscriptionOrigin;
+  paymentMethodAttached: boolean;
   paymentProvider: SubscriptionPaymentProvider;
   quantity: number;
   status: SubscriptionStatus;
@@ -443,9 +433,7 @@ export type PullRequest = {
   prCreatedAt: string;
   prMergedAt: string;
   prUpdatedAt: string;
-  sourceBranch: Branch;
   state: string;
-  targetBranch: Branch;
   title: string;
 };
 export type Reference = {
@@ -555,6 +543,17 @@ export type RootMutationType = {
     },
     Album
   >;
+  createBranch: FieldQuery<
+    {
+      branch: string;
+      from: string;
+      name: string;
+      owner: string;
+      provider: GitProvider;
+      team: string;
+    },
+    Branch
+  >;
   createCodeComment: FieldQuery<
     {
       anchorReference: CodeReference;
@@ -635,6 +634,12 @@ export type RootMutationType = {
     },
     string
   >;
+  deleteBranch: FieldQuery<
+    {
+      id: string;
+    },
+    boolean
+  >;
   deleteCollection: ListQuery<
     {
       path: string;
@@ -655,6 +660,15 @@ export type RootMutationType = {
       teamId: string;
     },
     PrivateRegistry
+  >;
+  deleteProject: FieldQuery<
+    {
+      name: string;
+      owner: string;
+      provider: GitProvider;
+      team: string;
+    },
+    boolean
   >;
   deleteSandboxes: ListQuery<
     {
@@ -680,6 +694,23 @@ export type RootMutationType = {
       owner: string;
       provider: GitProvider;
       team: string;
+    },
+    Project
+  >;
+  importReadOnlyBranch: FieldQuery<
+    {
+      branch: string;
+      name: string;
+      owner: string;
+      provider: GitProvider;
+    },
+    Branch
+  >;
+  importReadOnlyProject: FieldQuery<
+    {
+      name: string;
+      owner: string;
+      provider: GitProvider;
     },
     Project
   >;
@@ -958,15 +989,6 @@ export type RootMutationType = {
     },
     Notification
   >;
-  updateProjectEnvironment: FieldQuery<
-    {
-      environmentId: string;
-      gitProvider: GitProvider;
-      owner: string;
-      repo: string;
-    },
-    Project
-  >;
   updateSubscription: FieldQuery<
     {
       quantity: number;
@@ -997,6 +1019,22 @@ export type RootQueryType = {
     },
     Album
   >;
+  branchById: FieldQuery<
+    {
+      id: string;
+    },
+    Branch
+  >;
+  branchByName: FieldQuery<
+    {
+      branch: string;
+      name: string;
+      owner: string;
+      provider: GitProvider;
+      team?: string;
+    },
+    Branch
+  >;
   curatedAlbums: ListField<Album>;
   featureFlags: ListField<FeatureFlag>;
   git: FieldQuery<
@@ -1011,8 +1049,8 @@ export type RootQueryType = {
   githubOrganizationRepos: ListQuery<
     {
       organization: string;
-      page: number;
-      perPage: number;
+      page?: number;
+      perPage?: number;
     },
     GithubRepo
   >;
@@ -1023,13 +1061,22 @@ export type RootQueryType = {
     },
     GithubRepo
   >;
+  limits: Limits;
   me: CurrentUser;
   project: FieldQuery<
     {
-      gitProvider: GitProvider;
+      gitProvider?: GitProvider;
       owner: string;
       repo: string;
-      team: string;
+      team?: string;
+    },
+    Project
+  >;
+  projects: ListQuery<
+    {
+      name: string;
+      owner: string;
+      provider: GitProvider;
     },
     Project
   >;
@@ -1186,17 +1233,6 @@ export type SandboxProtectionSettings = {
   preventSandboxExport: boolean;
   preventSandboxLeaving: boolean;
 };
-export type SandboxV2 = {
-  alias: string;
-  authorization: Authorization;
-  collaborators: ListField<Collaborator>;
-  gitv2: GitV2;
-  id: string;
-  insertedAt: string;
-  isV2: boolean;
-  removedAt: string;
-  updatedAt: string;
-};
 export type Source = {
   id: string;
   template: string;
@@ -1246,9 +1282,9 @@ export type Team = {
   description: string;
   drafts: ListQuery<
     {
-      authorId: string;
-      limit: number;
-      orderBy: OrderBy;
+      authorId?: string;
+      limit?: number;
+      orderBy?: OrderBy;
     },
     Sandbox
   >;
@@ -1261,18 +1297,18 @@ export type Team = {
   privateRegistry: PrivateRegistry;
   projects: ListQuery<
     {
-      syncData: boolean;
+      syncData?: boolean;
     },
     Project
   >;
   sandboxes: ListQuery<
     {
-      alwaysOn: boolean;
-      authorId: string;
-      hasOriginalGit: boolean;
-      limit: number;
-      orderBy: OrderBy;
-      showDeleted: boolean;
+      alwaysOn?: boolean;
+      authorId?: string;
+      hasOriginalGit?: boolean;
+      limit?: number;
+      orderBy?: OrderBy;
+      showDeleted?: boolean;
     },
     Sandbox
   >;
@@ -1280,7 +1316,7 @@ export type Team = {
   shortid: string;
   subscription: FieldQuery<
     {
-      includeCancelled: boolean;
+      includeCancelled?: boolean;
     },
     ProSubscription
   >;
@@ -1363,18 +1399,17 @@ export type ObjectTypes = {
   Comment: Comment;
   Connection: Connection;
   CurrentUser: CurrentUser;
-  Environment: Environment;
   FeatureFlag: FeatureFlag;
   Git: Git;
   GithubOrganization: GithubOrganization;
   GithubProfile: GithubProfile;
   GithubRepo: GithubRepo;
   GitHubRepository: GitHubRepository;
-  GitV2: GitV2;
   ImageReferenceMetadata: ImageReferenceMetadata;
   InstallationEvent: InstallationEvent;
   Invitation: Invitation;
   LastCommit: LastCommit;
+  Limits: Limits;
   Notification: Notification;
   NotificationPreferences: NotificationPreferences;
   PreviewReferenceMetadata: PreviewReferenceMetadata;
@@ -1388,7 +1423,6 @@ export type ObjectTypes = {
   RootSubscriptionType: RootSubscriptionType;
   Sandbox: Sandbox;
   SandboxProtectionSettings: SandboxProtectionSettings;
-  SandboxV2: SandboxV2;
   Source: Source;
   Status: Status;
   StatusCommitCounts: StatusCommitCounts;
@@ -1548,6 +1582,34 @@ const { createQuery, createMutation, createSubscription } = createQueryUtils<
       type: "String",
     },
   },
+  branchById: {
+    id: {
+      isNonNull: true,
+      type: "String",
+    },
+  },
+  branchByName: {
+    branch: {
+      isNonNull: true,
+      type: "String",
+    },
+    name: {
+      isNonNull: true,
+      type: "String",
+    },
+    owner: {
+      isNonNull: true,
+      type: "String",
+    },
+    provider: {
+      isNonNull: true,
+      type: "GitProvider",
+    },
+    team: {
+      isNonNull: false,
+      type: "ID",
+    },
+  },
   git: {
     branch: {
       isNonNull: true,
@@ -1608,6 +1670,12 @@ const { createQuery, createMutation, createSubscription } = createQueryUtils<
       type: "ID",
     },
   },
+  projects: {
+    syncData: {
+      isNonNull: false,
+      type: "Boolean",
+    },
+  },
   sandbox: {
     sandboxId: {
       isNonNull: true,
@@ -1638,12 +1706,6 @@ const { createQuery, createMutation, createSubscription } = createQueryUtils<
     orderBy: {
       isNonNull: false,
       type: "OrderBy",
-    },
-  },
-  projects: {
-    syncData: {
-      isNonNull: false,
-      type: "Boolean",
     },
   },
   subscription: {
