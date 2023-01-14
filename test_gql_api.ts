@@ -26,14 +26,9 @@ const client = createClient({
 });
 
 const querySandbox = createQuery("SomeQuery", ({ id }: { id: string }) => ({
-  sandbox: [
-    { sandboxId: id },
-    {
-      collaborators: {
-        id: true,
-      },
-    },
-  ],
+  project: [{
+    
+  }]
 }));
 
 const resp = client.query(querySandbox, { id: "new" });
